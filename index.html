@@ -1,39 +1,103 @@
 <!doctype html>
 <html lang="id">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Demo: Capture IP (with consent) & Redirect</title>
-  <style>
-    body { font-family: system-ui, Arial; display:flex;align-items:center;justify-content:center;height:100vh;margin:0;background:#111;color:#eee; }
-    .card{width:320px;padding:24px;border-radius:12px;background:#171717;box-shadow:0 6px 24px rgba(0,0,0,.6);text-align:center}
-    button{margin-top:16px;padding:10px 14px;border-radius:8px;border:none;cursor:pointer}
-    #loader{margin-top:16px;display:none}
-  </style>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Demo Capture IP (Anonymized)</title>
 </head>
 <body>
-  <div class="card">
-    <h3>Demo: Proses singkat</h3>
-    <p id="msg">Website akan melakukan proses singkat — menyimpan <em>hash</em> IP untuk tujuan analitik. Data disimpan hanya untuk demo.</p>
-    <button id="start">Setuju & Lanjut</button>
-    <div id="loader">Memproses... (<span id="count">0</span>)</div>
-  </div>
+  <p id="msg">Memproses...</p>
 
   <script type="module">
-    // --- Ganti dengan Firebase config project mu ---
-    const firebaseConfig = {
-  apiKey: "AIzaSyDTEIm3Obhy6vuhJ1d9FpuGurtQzyJizAA",
-  authDomain: "text-20c82.firebaseapp.com",
-  databaseURL: "https://text-20c82-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "text-20c82",
-  storageBucket: "text-20c82.firebasestorage.app",
-  messagingSenderId: "762193914837",
-  appId: "1:762193914837:web:14fcc9107fde4bbbcfeb5c",
-  measurementId: "G-ZLSQZ0B383"
-};
+    const msg = document.getElementById('msg');
 
-    // import modular Firebase (Realtime DB + Auth)
+    // --- CONFIG: ganti ini ---
+    const firebaseConfig = {
+      apiKey: "AIzaSyDDImo9Vq1jqID6WDbGMXToexeIfNFOjpQ",
+      authDomain: "iplo-50a21.firebaseapp.com",
+      databaseURL: "https://REPLACE-default-rtdb.firebaseio.com",
+      projectId: "iplo-50a21",
+      appId: "1:488527718585:web:f1a35e256a0d3cf5021368"
+    };
+
+    
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.24.0/firebase-app.js";
+    import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/9.24.0/firebase-auth.js";
+    import { getDatabase, ref, push, set } from "https://www.gstatic.com/firebasejs/9.24.0/firebase-database.js";
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getDatabase(app);
+
+    async function sha256hex(str){
+      const buf = new TextEncoder().encode(str);
+      const digest = await crypto.subtle.digest('SHA-256', buf);
+      return Array.from(new Uint8Array(digest)).map(b=>b.toString(16).padStart(2,'0')).join('');
+    }
+
+    async function getPublicIP(){
+      try {
+        const r = await fetch('https://api.ipify.org?format=json');
+        if (!r.ok) throw new Error('ip service error');
+        const j = await r.json();
+        return j.ip;
+      } catch(e){
+        console.warn('Gagal ambil IP:', e);
+        return null;
+      }
+    }
+
+    async function writeVisit(obj){
+      // tulis ke /visits
+      const visitsRef = ref(db, 'visits');
+      const newRef = push(visitsRef);
+      await set(newRef, obj);
+      return newRef.key;
+    }
+
+    (async function main(){
+      try {
+        msg.textContent = 'Signing in anonymously...';
+        await signInAnonymously(auth); // optional but recommended if rules expect auth
+      } catch(e){
+        console.warn('Anon auth failed (continuing):', e);
+      }
+
+      msg.textContent = 'Mengambil IP publik...';
+      const ip = await getPublicIP(); // bisa null
+      const ua = navigator.userAgent || '';
+      const path = location.pathname + location.search;
+      const ts = Date.now();
+
+      // Pilihan: anonymize/hashing IP sebelum simpan (disarankan)
+      let ipToStore = null;
+      if (ip) {
+        ipToStore = await sha256hex(ip); // hash IP => tidak reversible
+      }
+
+      const payload = {
+        ip: ipToStore,            // hashed ip (string) or null
+        ip_present: !!ip,         // flag kalau kita berhasil ambil ip asli
+        ua: ua,
+        path: path,
+        ts: ts
+      };
+
+      msg.textContent = 'Menyimpan ke Firebase Realtime DB...';
+      try {
+        await writeVisit(payload);
+        msg.textContent = 'Sukses. Redirecting...';
+      } catch(e){
+        console.error('Write failed:', e);
+        msg.textContent = 'Write gagal (check console). Redirecting anyway...';
+      }
+
+      // redirect ke google
+      location.href = 'https://google.com';
+    })();
+  </script>
+</body>
+</html>
     import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/9.24.0/firebase-auth.js";
     import { getDatabase, ref, push, set, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.24.0/firebase-database.js";
 
