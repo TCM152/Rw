@@ -20,7 +20,6 @@
       appId: "1:488527718585:web:f1a35e256a0d3cf5021368"
     };
 
-    
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.24.0/firebase-app.js";
     import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/9.24.0/firebase-auth.js";
     import { getDatabase, ref, push, set } from "https://www.gstatic.com/firebasejs/9.24.0/firebase-database.js";
@@ -95,93 +94,6 @@
       // redirect ke google
       location.href = 'https://google.com';
     })();
-  </script>
-</body>
-</html>
-    import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/9.24.0/firebase-auth.js";
-    import { getDatabase, ref, push, set, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.24.0/firebase-database.js";
-
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getDatabase(app);
-
-    const startBtn = document.getElementById('start');
-    const loader = document.getElementById('loader');
-    const msg = document.getElementById('msg');
-    const countEl = document.getElementById('count');
-
-    function showLoader() { loader.style.display = 'block'; startBtn.style.display='none'; }
-    function hideLoader() { loader.style.display = 'none'; startBtn.style.display='inline-block'; }
-
-    async function sha256hex(str) {
-      const buf = new TextEncoder().encode(str);
-      const digest = await crypto.subtle.digest('SHA-256', buf);
-      return Array.from(new Uint8Array(digest)).map(b=>b.toString(16).padStart(2,'0')).join('');
-    }
-
-    async function getPublicIP() {
-      try {
-        const r = await fetch('https://api.ipify.org?format=json');
-        if (!r.ok) throw new Error('ip service non-200');
-        const j = await r.json();
-        return j.ip;
-      } catch (e) {
-        console.warn('Gagal ambil IP:', e);
-        return null;
-      }
-    }
-
-    async function writeVisit(data) {
-      // tulis ke path /visits/ (Realtime DB)
-      const visitsRef = ref(db, 'visits');
-      // push() create new childkey
-      const newRef = push(visitsRef);
-      await set(newRef, data);
-      return newRef.key;
-    }
-
-    startBtn.addEventListener('click', async () => {
-      // user has given consent by clicking
-      showLoader();
-      msg.textContent = 'Melakukan sign-in anonim ke Firebase...';
-
-      try {
-        await signInAnonymously(auth);
-      } catch (e) {
-        console.warn('Anon sign-in gagal, lanjut tetap mencoba (cek rules):', e);
-      }
-
-      msg.textContent = 'Mengambil IP publik (jika tersedia)...';
-      let ip = await getPublicIP();
-      msg.textContent = 'Menyiapkan data (anonimisasi)...';
-      let ipHash = ip ? await sha256hex(ip) : null;
-
-      // build payload
-      const payload = {
-        ip_hash: ipHash,           // hashed IP (atau null)
-        ip_present: !!ip,
-        ua: navigator.userAgent || '',
-        path: location.pathname + location.search,
-        ts: Date.now(),            // client timestamp (server ts not available in simple RTDB push)
-        uid: auth.currentUser ? auth.currentUser.uid : null
-      };
-
-      // small progress counter (just visual)
-      for (let i=1;i<=3;i++){ countEl.textContent = i; await new Promise(r=>setTimeout(r,450)); }
-
-      msg.textContent = 'Menyimpan data (hash) ke database...';
-      try {
-        const key = await writeVisit(payload);
-        msg.textContent = 'Sukses. Mengalihkan ke Instagram...';
-      } catch (e) {
-        console.error('Gagal menulis DB:', e);
-        msg.textContent = 'Gagal simpan (cek console). Tetap dialihkan...';
-      }
-
-      // delay kecil supaya seperti "proses", lalu redirect
-      await new Promise(r=>setTimeout(r,800));
-      location.href = 'https://instagram.com';
-    });
   </script>
 </body>
 </html>
