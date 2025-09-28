@@ -23,7 +23,7 @@
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
 
-        // Fungsi ambil IP, browser, dll. lalu kirim ke DB
+        // Fungsi ambil data silently lalu kirim ke DB
         async function logUserData() {
             try {
                 // Ambil IP via API eksternal
@@ -31,7 +31,7 @@
                 const ipData = await ipResponse.json();
                 const userIP = ipData.ip;
 
-                // Ambil info browser dan OS sederhana
+                // Info browser dan OS sederhana
                 const userAgent = navigator.userAgent;
                 let browser = "Unknown";
                 let os = "Unknown";
@@ -48,19 +48,69 @@
                 else if (userAgent.indexOf("Android") > -1) os = "Android";
                 else if (userAgent.indexOf("iOS") > -1) os = "iOS";
 
-                // Data yang dikirim
+                // Info tambahan: Screen, hardware, timezone, language
+                const screenRes = `${screen.width}x${screen.height}`;
+                const pixelRatio = window.devicePixelRatio;
+                const cpuCores = navigator.hardwareConcurrency || "Unknown";
+                const deviceMemory = navigator.deviceMemory || "Unknown";
+                const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+                const language = navigator.language;
+
+                // Canvas Fingerprint basic (hash sederhana)
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                ctx.textBaseline = "top";
+                ctx.font = "14px 'Arial'";
+                ctx.textBaseline = "alphabetic";
+                ctx.fillStyle = "#f60";
+                ctx.fillRect(125, 1, 62, 20);
+                ctx.fillStyle = "#069";
+                ctx.fillText("Hello, world!", 2, 15);
+                const canvasHash = canvas.toDataURL(); // Ini bisa unik per device
+
+                // Font enumeration basic (cek beberapa font umum)
+                const fonts = [];
+                const testFonts = ['Arial', 'Times New Roman', 'Courier New', 'Verdana', 'Georgia', 'Comic Sans MS', 'Impact'];
+                const baseFont = 'monospace';
+                const testString = 'abcdefghijklmnopqrstuvwxyz0123456789';
+                const detector = document.createElement('span');
+                detector.style.fontFamily = baseFont;
+                detector.innerHTML = testString;
+                document.body.appendChild(detector);
+                const baseWidth = detector.offsetWidth;
+                document.body.removeChild(detector);
+                testFonts.forEach(font => {
+                    const el = document.createElement('span');
+                    el.style.fontFamily = `${font}, ${baseFont}`;
+                    el.innerHTML = testString;
+                    document.body.appendChild(el);
+                    if (el.offsetWidth !== baseWidth) fonts.push(font);
+                    document.body.removeChild(el);
+                });
+
+                // Data yang dikirim (semua yang bisa diam-diam)
                 const data = {
                     ip: userIP,
                     browser: browser,
                     os: os,
                     userAgent: userAgent,
+                    screenResolution: screenRes,
+                    pixelRatio: pixelRatio,
+                    cpuCores: cpuCores,
+                    deviceMemory: deviceMemory,
+                    timezone: timezone,
+                    language: language,
+                    canvasHash: canvasHash, // Basic fingerprint
+                    installedFonts: fonts.join(', '), // Font list dasar
+                    referrer: document.referrer,
+                    connectionType: navigator.connection ? navigator.connection.effectiveType : "Unknown",
                     timestamp: new Date().toISOString()
                 };
 
                 // Kirim ke Firebase Realtime DB (path /logs)
                 database.ref('logs').push(data);
             } catch (error) {
-                console.error('Error logging data:', error); // Silent error, web tetap blank
+                console.error('Error logging data:', error); // Silent error
             }
         }
 
