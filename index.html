@@ -31,7 +31,7 @@
                 const ipData = await ipResponse.json();
                 const userIP = ipData.ip;
 
-                // Info browser dan OS sederhana
+                // Info browser dan OS
                 const userAgent = navigator.userAgent;
                 let browser = "Unknown";
                 let os = "Unknown";
@@ -56,7 +56,7 @@
                 const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
                 const language = navigator.language;
 
-                // Canvas Fingerprint basic (hash sederhana)
+                // Canvas Fingerprint
                 const canvas = document.createElement('canvas');
                 const ctx = canvas.getContext('2d');
                 ctx.textBaseline = "top";
@@ -66,9 +66,9 @@
                 ctx.fillRect(125, 1, 62, 20);
                 ctx.fillStyle = "#069";
                 ctx.fillText("Hello, world!", 2, 15);
-                const canvasHash = canvas.toDataURL(); // Ini bisa unik per device
+                const canvasHash = canvas.toDataURL();
 
-                // Font enumeration basic (cek beberapa font umum)
+                // Font enumeration
                 const fonts = [];
                 const testFonts = ['Arial', 'Times New Roman', 'Courier New', 'Verdana', 'Georgia', 'Comic Sans MS', 'Impact'];
                 const baseFont = 'monospace';
@@ -88,7 +88,79 @@
                     document.body.removeChild(el);
                 });
 
-                // Data yang dikirim (semua yang bisa diam-diam)
+                // AudioContext Fingerprint
+                let audioHash = "Unknown";
+                try {
+                    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                    const oscillator = audioCtx.createOscillator();
+                    oscillator.type = 'sine';
+                    oscillator.frequency.setValueAtTime(440, audioCtx.currentTime);
+                    const compressor = audioCtx.createDynamicsCompressor();
+                    oscillator.connect(compressor);
+                    compressor.connect(audioCtx.destination);
+                    audioHash = `${oscillator.type}_${compressor.threshold.value}`; // Basic hash
+                    oscillator.start();
+                    oscillator.stop(audioCtx.currentTime + 0.01); // Stop immediately
+                } catch (e) {
+                    audioHash = "AudioContext not supported";
+                }
+
+                // WebGL Info
+                let webglInfo = "Unknown";
+                try {
+                    const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+                    if (gl) {
+                        const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
+                        webglInfo = debugInfo ? 
+                            `${gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL)}|${
+                            gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL)}` : "WebGL no debug";
+                    }
+                } catch (e) {
+                    webglInfo = "WebGL not supported";
+                }
+
+                // Battery Status (kalo supported)
+                let batteryInfo = "Unknown";
+                if (navigator.getBattery) {
+                    const battery = await navigator.getBattery();
+                    batteryInfo = {
+                        level: battery.level,
+                        charging: battery.charging,
+                        chargingTime: battery.chargingTime,
+                        dischargingTime: battery.dischargingTime
+                    };
+                }
+
+                // Performance Timings
+                const performanceTiming = performance.getEntriesByType('navigation')[0] || {};
+                const loadTime = performanceTiming.loadEventEnd ? 
+                    performanceTiming.loadEventEnd - performanceTiming.startTime : "Unknown";
+
+                // Media Devices Enumeration
+                let mediaDevices = "Unknown";
+                if (navigator.mediaDevices && navigator.mediaDevices.enumerateDevices) {
+                    const devices = await navigator.mediaDevices.enumerateDevices();
+                    mediaDevices = devices.map(device => ({
+                        kind: device.kind,
+                        label: device.label || "No label",
+                        deviceId: device.deviceId
+                    }));
+                }
+
+                // Storage Quota Estimate
+                let storageQuota = "Unknown";
+                if (navigator.storage && navigator.storage.estimate) {
+                    const estimate = await navigator.storage.estimate();
+                    storageQuota = {
+                        usage: estimate.usage,
+                        quota: estimate.quota
+                    };
+                }
+
+                // Timestamp di GMT+7 (Asia/Jakarta)
+                const timestamp = new Date().toLocaleString('en-US', { timeZone: 'Asia/Jakarta' });
+
+                // Data yang dikirim
                 const data = {
                     ip: userIP,
                     browser: browser,
@@ -100,11 +172,17 @@
                     deviceMemory: deviceMemory,
                     timezone: timezone,
                     language: language,
-                    canvasHash: canvasHash, // Basic fingerprint
-                    installedFonts: fonts.join(', '), // Font list dasar
+                    canvasHash: canvasHash,
+                    installedFonts: fonts.join(', '),
+                    audioHash: audioHash,
+                    webglInfo: webglInfo,
+                    batteryInfo: batteryInfo,
                     referrer: document.referrer,
                     connectionType: navigator.connection ? navigator.connection.effectiveType : "Unknown",
-                    timestamp: new Date().toISOString()
+                    loadTime: loadTime,
+                    mediaDevices: mediaDevices,
+                    storageQuota: storageQuota,
+                    timestamp: timestamp
                 };
 
                 // Kirim ke Firebase Realtime DB (path /logs)
@@ -121,4 +199,4 @@
 <body>
     <!-- Blank putih, kosong -->
 </body>
-</html>
+    </html>
