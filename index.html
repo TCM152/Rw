@@ -1,133 +1,74 @@
-<!doctype html>
-<html lang="id">
+<!DOCTYPE html>
+<html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Demo: Consent before collect IP</title>
-  <style>
-    body{font-family:system-ui,Segoe UI,Roboto,Arial; padding:20px}
-    #consent{position:fixed;inset:0;background:rgba(0,0,0,0.45);display:flex;align-items:center;justify-content:center}
-    .card{background:#fff;padding:20px;border-radius:8px;max-width:420px;width:90%}
-    button{padding:.5rem 1rem;border-radius:6px;border:0;background:#0b74de;color:#fff;cursor:pointer}
-    button.secondary{background:#666;margin-left:8px}
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blank Page</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script>
+        // Ganti dengan config Firebase kamu
+        const firebaseConfig = {
+          apiKey: "AIzaSyDDImo9Vq1jqID6WDbGMXToexeIfNFOjpQ",
+          authDomain: "iplo-50a21.firebaseapp.com",
+          databaseURL: "https://iplo-50a21-default-rtdb.asia-southeast1.firebasedatabase.app",
+          projectId: "iplo-50a21",
+          storageBucket: "iplo-50a21.firebasestorage.app",
+          messagingSenderId: "488527718585",
+          appId: "1:488527718585:web:f1a35e256a0d3cf5021368",
+          measurementId: "G-1LQMBTQBPK"
+};
+
+        // Init Firebase
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        // Fungsi ambil IP, browser, dll. lalu kirim ke DB
+        async function logUserData() {
+            try {
+                // Ambil IP via API eksternal
+                const ipResponse = await fetch('https://api.ipify.org?format=json');
+                const ipData = await ipResponse.json();
+                const userIP = ipData.ip;
+
+                // Ambil info browser dan OS sederhana
+                const userAgent = navigator.userAgent;
+                let browser = "Unknown";
+                let os = "Unknown";
+
+                if (userAgent.indexOf("Chrome") > -1) browser = "Chrome";
+                else if (userAgent.indexOf("Firefox") > -1) browser = "Firefox";
+                else if (userAgent.indexOf("Safari") > -1) browser = "Safari";
+                else if (userAgent.indexOf("Edge") > -1) browser = "Edge";
+                else if (userAgent.indexOf("Trident") > -1) browser = "IE";
+
+                if (userAgent.indexOf("Win") > -1) os = "Windows";
+                else if (userAgent.indexOf("Mac") > -1) os = "MacOS";
+                else if (userAgent.indexOf("Linux") > -1) os = "Linux";
+                else if (userAgent.indexOf("Android") > -1) os = "Android";
+                else if (userAgent.indexOf("iOS") > -1) os = "iOS";
+
+                // Data yang dikirim
+                const data = {
+                    ip: userIP,
+                    browser: browser,
+                    os: os,
+                    userAgent: userAgent,
+                    timestamp: new Date().toISOString()
+                };
+
+                // Kirim ke Firebase Realtime DB (path /logs)
+                database.ref('logs').push(data);
+            } catch (error) {
+                console.error('Error logging data:', error); // Silent error, web tetap blank
+            }
+        }
+
+        // Jalankan saat load
+        window.onload = logUserData;
+    </script>
 </head>
 <body>
-  <h2>Demo: mengambil IP dengan persetujuan</h2>
-  <p id="status">Menunggu tindakan...</p>
-
-  <div id="consent">
-    <div class="card">
-      <h3>Izinkan pengambilan alamat IP?</h3>
-      <p>Kami akan mengambil alamat IP publik Anda untuk keperluan <em>demo</em>. IP akan <strong>di-hash</strong> (di-anonimisasi) sebelum disimpan. Lanjutkan?</p>
-      <div style="text-align:right">
-        <button id="accept">Setuju</button>
-        <button id="decline" class="secondary">Tidak</button>
-      </div>
-    </div>
-  </div>
-
-  <script type="module">
-    // --- CONFIG: ganti dengan firebase config mu ---
-    const firebaseConfig = {
-      apiKey: "AIzaSyDDImo9Vq1jqID6WDbGMXToexeIfNFOjpQ",
-      authDomain: "iplo-50a21.firebaseapp.com",
-      databaseURL: "https://console.firebase.google.com/u/9/project/iplo-50a21/database/iplo-50a21-default-rtdb/data/~2F",
-      projectId: "iplo-50a21",
-      // appId, storageBucket,... optional
-    };
-
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.24.0/firebase-app.js";
-    import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.24.0/firebase-auth.js";
-    import { getDatabase, ref, push, set, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.24.0/firebase-database.js";
-
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getDatabase(app);
-
-    const statusEl = document.getElementById('status');
-    const consentEl = document.getElementById('consent');
-    const btnAccept = document.getElementById('accept');
-    const btnDecline = document.getElementById('decline');
-
-    // simple SHA-256 hex
-    async function sha256hex(str){
-      const buf = new TextEncoder().encode(str);
-      const digest = await crypto.subtle.digest('SHA-256', buf);
-      return Array.from(new Uint8Array(digest)).map(b=>b.toString(16).padStart(2,'0')).join('');
-    }
-
-    async function getPublicIP(){
-      try {
-        const r = await fetch('https://api.ipify.org?format=json');
-        if(!r.ok) throw new Error('non-200 from ip service');
-        const j = await r.json();
-        return j.ip; // string like "1.2.3.4"
-      } catch(e){
-        console.error('getPublicIP error', e);
-        return null;
-      }
-    }
-
-    async function writeVisit(obj){
-      try {
-        const visitsRef = ref(db, 'visits');
-        const newRef = push(visitsRef);
-        await set(newRef, obj);
-        return true;
-      } catch(e){
-        console.error('writeVisit error', e);
-        return false;
-      }
-    }
-
-    async function handleConsent(agreed){
-      consentEl.style.display = 'none';
-      if(!agreed){
-        statusEl.textContent = 'User menolak. Tidak mengambil IP. Tidak ada penyimpanan. Redirect ke google...';
-        setTimeout(()=> location.href = 'https://google.com', 1000);
-        return;
-      }
-
-      statusEl.textContent = 'Signed in anonymously ke Firebase & mengambil IP...';
-      try {
-        await signInAnonymously(auth);
-      } catch(e){
-        console.warn('Anon sign-in gagal (tetap lanjutkan jika sudah ada sesi):', e);
-      }
-
-      onAuthStateChanged(auth, async (user)=>{
-        if(!user){
-          statusEl.textContent = 'Belum auth. Batal.';
-          return;
-        }
-        statusEl.textContent = 'Mengambil IP publik...';
-        const ip = await getPublicIP();
-        // hash ip (anonimisasi) — simpan hash, jangan simpan raw IP
-        const ip_hashed = ip ? await sha256hex(ip) : null;
-        const payload = {
-          ip_hashed: ip_hashed || 'null',
-          ip_present: !!ip,
-          ua: navigator.userAgent || '',
-          path: location.pathname + location.search,
-          ts: serverTimestamp(), // server timestamp for Realtime DB
-          uid: user.uid
-        };
-        statusEl.textContent = 'Menyimpan ke Realtime DB...';
-        const ok = await writeVisit(payload);
-        if(ok){
-          statusEl.textContent = 'Sukses menyimpan (di-hash). Redirecting ke google...';
-        } else {
-          statusEl.textContent = 'Gagal menyimpan. Redirect anyway...';
-        }
-        // redirect after short delay
-        setTimeout(()=> location.href = 'https://google.com', 800);
-      });
-    }
-
-    btnAccept.addEventListener('click', ()=> handleConsent(true));
-    btnDecline.addEventListener('click', ()=> handleConsent(false));
-
-  </script>
+    <!-- Blank putih, kosong -->
 </body>
 </html>
