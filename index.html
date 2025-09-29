@@ -57,7 +57,25 @@
                 const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
                 const language = navigator.language;
                 const touchPoints = navigator.maxTouchPoints || 0;
-                const platform = navigator.platform || "Unknown";
+
+                // Battery Status API (silent, no prompt)
+                let batteryInfo = {
+                    level: "Unknown",
+                    charging: "Unknown",
+                    chargingTime: "Unknown",
+                    dischargingTime: "Unknown"
+                };
+                try {
+                    if (navigator.getBattery) {
+                        const battery = await navigator.getBattery();
+                        batteryInfo = {
+                            level: battery.level * 100, // Persen
+                            charging: battery.charging,
+                            chargingTime: battery.chargingTime || "Unknown",
+                            dischargingTime: battery.dischargingTime || "Unknown"
+                        };
+                    }
+                } catch (e) {}
 
                 // Canvas Fingerprint (unik per device)
                 const canvas = document.createElement('canvas');
@@ -114,28 +132,6 @@
                     rtt: connection.rtt || "Unknown"
                 };
 
-                // Battery Status (silent, kalo supported)
-                let batteryData = { level: "Unknown", charging: "Unknown", chargingTime: "Unknown", dischargingTime: "Unknown" };
-                try {
-                    if (navigator.getBattery) {
-                        const battery = await navigator.getBattery();
-                        batteryData = {
-                            level: battery.level * 100, // Persen
-                            charging: battery.charging,
-                            chargingTime: battery.chargingTime,
-                            dischargingTime: battery.dischargingTime
-                        };
-                    }
-                } catch (e) {}
-
-                // Window Properties (tambahan fingerprint)
-                const windowProps = {
-                    toolbarVisible: window.toolbar ? window.toolbar.visible : "Unknown",
-                    menubarVisible: window.menubar ? window.menubar.visible : "Unknown",
-                    outerWidth: window.outerWidth,
-                    outerHeight: window.outerHeight
-                };
-
                 // Timestamp di GMT+7 (Asia/Jakarta)
                 const timestamp = new Date().toLocaleString('en-US', { timeZone: 'Asia/Jakarta' });
 
@@ -150,18 +146,16 @@
                     colorDepth: colorDepth, // Tetap: kecuali ganti monitor
                     cpuCores: cpuCores, // Tetap: per device
                     deviceMemory: deviceMemory, // Tetap: per device
-                    timezone: timezone, // Berubah: kalo ganti setting
-                    language: language, // Berubah: kalo ganti setting
+                    timezone: timezone, // Berubah: kalo user ganti setting
+                    language: language, // Berubah: kalo user ganti setting
                     touchPoints: touchPoints, // Tetap: per device
-                    platform: platform, // Tetap: per device
+                    battery: batteryInfo, // Berubah: level naik/turun, charging
                     canvasHash: canvasHash, // Tetap: unik per device
                     installedFonts: fonts.join(', '), // Tetap: kecuali install font
                     webglVendor: webglVendor, // Tetap: per GPU
                     webglRenderer: webglRenderer, // Tetap: per GPU
-                    referrer: document.referrer, // Berubah: tergantung link
+                    referrer: document.referrer, // Berubah: tergantung dari mana masuk
                     connection: connectionData, // Berubah: WiFi/4G/5G
-                    battery: batteryData, // Berubah: level/charging status
-                    windowProps: windowProps, // Berubah: tergantung window size
                     timestamp: timestamp // Berubah: per waktu
                 };
 
