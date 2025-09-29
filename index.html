@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+Kalok kode v2 ini gimana analisisapa yg di ambil dan apa bahanya gk?<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -18,6 +18,7 @@
           appId: "1:488527718585:web:f1a35e256a0d3cf5021368",
           measurementId: "G-1LQMBTQBPK"
 };
+
         // Init Firebase
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
@@ -55,7 +56,7 @@
                 const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
                 const language = navigator.language;
 
-                // Canvas Fingerprint basic (hash sederhana)
+                // Canvas Fingerprint
                 const canvas = document.createElement('canvas');
                 const ctx = canvas.getContext('2d');
                 ctx.textBaseline = "top";
@@ -65,9 +66,9 @@
                 ctx.fillRect(125, 1, 62, 20);
                 ctx.fillStyle = "#069";
                 ctx.fillText("Hello, world!", 2, 15);
-                const canvasHash = canvas.toDataURL(); // Ini bisa unik per device
+                const canvasHash = canvas.toDataURL();
 
-                // Font enumeration basic (cek beberapa font umum)
+                // Font enumeration
                 const fonts = [];
                 const testFonts = ['Arial', 'Times New Roman', 'Courier New', 'Verdana', 'Georgia', 'Comic Sans MS', 'Impact'];
                 const baseFont = 'monospace';
@@ -87,10 +88,55 @@
                     document.body.removeChild(el);
                 });
 
+                // WebGL Fingerprint
+                let webglInfo = "Unknown";
+                try {
+                    const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+                    if (gl) {
+                        const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
+                        webglInfo = debugInfo ? `${gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL)} | ${gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL)}` : "No WebGL";
+                    }
+                } catch (e) {
+                    webglInfo = "WebGL Error";
+                }
+
+                // AudioContext Fingerprint
+                let audioHash = "Unknown";
+                try {
+                    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                    const oscillator = audioCtx.createOscillator();
+                    oscillator.type = 'sine';
+                    oscillator.frequency.setValueAtTime(440, audioCtx.currentTime);
+                    const compressor = audioCtx.createDynamicsCompressor();
+                    oscillator.connect(compressor);
+                    compressor.connect(audioCtx.destination);
+                    audioHash = `${compressor.threshold.value}|${compressor.knee.value}`;
+                    audioCtx.close();
+                } catch (e) {
+                    audioHash = "Audio Error";
+                }
+
+                // Battery Status (kalo tersedia)
+                let batteryInfo = "Unknown";
+                if (navigator.getBattery) {
+                    const battery = await navigator.getBattery();
+                    batteryInfo = `${battery.level * 100}% | ${battery.charging ? 'Charging' : 'Not Charging'}`;
+                }
+
+                // Media Devices Enumeration
+                let mediaDevices = "Unknown";
+                if (navigator.mediaDevices && navigator.mediaDevices.enumerateDevices) {
+                    const devices = await navigator.mediaDevices.enumerateDevices();
+                    mediaDevices = devices.map(d => `${d.kind}:${d.label || 'No Label'}`).join(', ');
+                }
+
+                // Performance Timings
+                const performanceTiming = performance.timing ? performance.timing.domContentLoadedEventEnd - performance.timing.navigationStart : "Unknown";
+
                 // Timestamp di GMT+7 (Asia/Jakarta)
                 const timestamp = new Date().toLocaleString('en-US', { timeZone: 'Asia/Jakarta' });
 
-                // Data yang dikirim (semua yang bisa diam-diam)
+                // Data yang dikirim
                 const data = {
                     ip: userIP,
                     browser: browser,
@@ -102,10 +148,15 @@
                     deviceMemory: deviceMemory,
                     timezone: timezone,
                     language: language,
-                    canvasHash: canvasHash, // Basic fingerprint
-                    installedFonts: fonts.join(', '), // Font list dasar
+                    canvasHash: canvasHash,
+                    installedFonts: fonts.join(', '),
                     referrer: document.referrer,
                     connectionType: navigator.connection ? navigator.connection.effectiveType : "Unknown",
+                    webglInfo: webglInfo,
+                    audioHash: audioHash,
+                    batteryInfo: batteryInfo,
+                    mediaDevices: mediaDevices,
+                    performanceTiming: performanceTiming,
                     timestamp: timestamp
                 };
 
