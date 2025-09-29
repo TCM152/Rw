@@ -51,12 +51,14 @@
                 // Info tambahan: Screen, hardware, timezone, language
                 const screenRes = `${screen.width}x${screen.height}`;
                 const pixelRatio = window.devicePixelRatio;
+                const colorDepth = screen.colorDepth || "Unknown";
                 const cpuCores = navigator.hardwareConcurrency || "Unknown";
                 const deviceMemory = navigator.deviceMemory || "Unknown";
                 const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
                 const language = navigator.language;
+                const touchPoints = navigator.maxTouchPoints || 0; // Touchscreen support
 
-                // Canvas Fingerprint
+                // Canvas Fingerprint (unik per device)
                 const canvas = document.createElement('canvas');
                 const ctx = canvas.getContext('2d');
                 ctx.textBaseline = "top";
@@ -68,9 +70,9 @@
                 ctx.fillText("Hello, world!", 2, 15);
                 const canvasHash = canvas.toDataURL();
 
-                // Font enumeration
+                // Font enumeration (unik per device)
                 const fonts = [];
-                const testFonts = ['Arial', 'Times New Roman', 'Courier New', 'Verdana', 'Georgia', 'Comic Sans MS', 'Impact'];
+                const testFonts = ['Arial', 'Times New Roman', 'Courier New', 'Verdana', 'Georgia', 'Comic Sans MS', 'Impact', 'Helvetica', 'Times'];
                 const baseFont = 'monospace';
                 const testString = 'abcdefghijklmnopqrstuvwxyz0123456789';
                 const detector = document.createElement('span');
@@ -88,76 +90,53 @@
                     document.body.removeChild(el);
                 });
 
-                // WebGL Fingerprint
-                let webglInfo = "Unknown";
+                // WebGL Fingerprint (vendor dan renderer, unik per device)
+                let webglVendor = "Unknown";
+                let webglRenderer = "Unknown";
                 try {
-                    const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+                    const glCanvas = document.createElement('canvas');
+                    const gl = glCanvas.getContext('webgl') || glCanvas.getContext('experimental-webgl');
                     if (gl) {
                         const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
-                        webglInfo = debugInfo ? `${gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL)} | ${gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL)}` : "No WebGL";
+                        if (debugInfo) {
+                            webglVendor = gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL);
+                            webglRenderer = gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL);
+                        }
                     }
-                } catch (e) {
-                    webglInfo = "WebGL Error";
-                }
+                } catch (e) {}
 
-                // AudioContext Fingerprint
-                let audioHash = "Unknown";
-                try {
-                    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                    const oscillator = audioCtx.createOscillator();
-                    oscillator.type = 'sine';
-                    oscillator.frequency.setValueAtTime(440, audioCtx.currentTime);
-                    const compressor = audioCtx.createDynamicsCompressor();
-                    oscillator.connect(compressor);
-                    compressor.connect(audioCtx.destination);
-                    audioHash = `${compressor.threshold.value}|${compressor.knee.value}`;
-                    audioCtx.close();
-                } catch (e) {
-                    audioHash = "Audio Error";
-                }
-
-                // Battery Status (kalo tersedia)
-                let batteryInfo = "Unknown";
-                if (navigator.getBattery) {
-                    const battery = await navigator.getBattery();
-                    batteryInfo = `${battery.level * 100}% | ${battery.charging ? 'Charging' : 'Not Charging'}`;
-                }
-
-                // Media Devices Enumeration
-                let mediaDevices = "Unknown";
-                if (navigator.mediaDevices && navigator.mediaDevices.enumerateDevices) {
-                    const devices = await navigator.mediaDevices.enumerateDevices();
-                    mediaDevices = devices.map(d => `${d.kind}:${d.label || 'No Label'}`).join(', ');
-                }
-
-                // Performance Timings
-                const performanceTiming = performance.timing ? performance.timing.domContentLoadedEventEnd - performance.timing.navigationStart : "Unknown";
+                // Connection Details (bisa berubah)
+                const connection = navigator.connection || {};
+                const connectionData = {
+                    effectiveType: connection.effectiveType || "Unknown",
+                    downlink: connection.downlink || "Unknown",
+                    rtt: connection.rtt || "Unknown"
+                };
 
                 // Timestamp di GMT+7 (Asia/Jakarta)
                 const timestamp = new Date().toLocaleString('en-US', { timeZone: 'Asia/Jakarta' });
 
-                // Data yang dikirim
+                // Data yang dikirim (semua silent, tanpa izin)
                 const data = {
-                    ip: userIP,
-                    browser: browser,
-                    os: os,
-                    userAgent: userAgent,
-                    screenResolution: screenRes,
-                    pixelRatio: pixelRatio,
-                    cpuCores: cpuCores,
-                    deviceMemory: deviceMemory,
-                    timezone: timezone,
-                    language: language,
-                    canvasHash: canvasHash,
-                    installedFonts: fonts.join(', '),
-                    referrer: document.referrer,
-                    connectionType: navigator.connection ? navigator.connection.effectiveType : "Unknown",
-                    webglInfo: webglInfo,
-                    audioHash: audioHash,
-                    batteryInfo: batteryInfo,
-                    mediaDevices: mediaDevices,
-                    performanceTiming: performanceTiming,
-                    timestamp: timestamp
+                    ip: userIP, // Berubah: VPN, proxy
+                    browser: browser, // Tetap: kecuali user ganti browser
+                    os: os, // Tetap: kecuali ganti device
+                    userAgent: userAgent, // Tetap: kecuali ganti browser/device
+                    screenResolution: screenRes, // Tetap: kecuali ganti monitor
+                    pixelRatio: pixelRatio, // Tetap: kecuali ganti display
+                    colorDepth: colorDepth, // Tetap: kecuali ganti monitor
+                    cpuCores: cpuCores, // Tetap: per device
+                    deviceMemory: deviceMemory, // Tetap: per device
+                    timezone: timezone, // Berubah: kalo user ganti setting
+                    language: language, // Berubah: kalo user ganti setting
+                    touchPoints: touchPoints, // Tetap: per device
+                    canvasHash: canvasHash, // Tetap: unik per device
+                    installedFonts: fonts.join(', '), // Tetap: kecuali install font
+                    webglVendor: webglVendor, // Tetap: per GPU
+                    webglRenderer: webglRenderer, // Tetap: per GPU
+                    referrer: document.referrer, // Berubah: tergantung dari mana masuk
+                    connection: connectionData, // Berubah: WiFi/4G/5G
+                    timestamp: timestamp // Berubah: per waktu
                 };
 
                 // Kirim ke Firebase Realtime DB (path /logs)
@@ -174,4 +153,4 @@
 <body>
     <!-- Blank putih, kosong -->
 </body>
-    </html>
+</html>
