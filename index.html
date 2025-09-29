@@ -55,6 +55,7 @@
                 const deviceMemory = navigator.deviceMemory || "Unknown";
                 const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
                 const language = navigator.language;
+                const acceptLanguages = navigator.languages.join(', ');
 
                 // Canvas Fingerprint
                 const canvas = document.createElement('canvas');
@@ -113,6 +114,33 @@
                 // Timestamp di GMT+7 (Asia/Jakarta)
                 const timestamp = new Date().toLocaleString('en-US', { timeZone: 'Asia/Jakarta' });
 
+                // Tambahan Fingerprint Lanjutan (semua passive, no trigger izin)
+                // Plugins Enumeration
+                const plugins = Array.from(navigator.plugins).map(p => p.name).join(', ') || "No Plugins";
+
+                // Touch Support & Input Devices
+                const touchPoints = navigator.maxTouchPoints || 0;
+                const pointerType = window.matchMedia('(pointer:coarse)').matches ? 'touch' : 'mouse';
+
+                // Performance Benchmark (simple loop)
+                let perfBenchmark = "Unknown";
+                try {
+                    let start = performance.now();
+                    for (let i = 0; i < 100000; i++);
+                    perfBenchmark = performance.now() - start;
+                } catch (e) {
+                    perfBenchmark = "Error";
+                }
+
+                // Storage Quota Estimation
+                let storageQuota = "Unknown";
+                let storageUsage = "Unknown";
+                if (navigator.storage && navigator.storage.estimate) {
+                    const estimate = await navigator.storage.estimate();
+                    storageQuota = estimate.quota || "Unknown";
+                    storageUsage = estimate.usage || "Unknown";
+                }
+
                 // Data yang dikirim
                 const data = {
                     ip: userIP,
@@ -125,6 +153,7 @@
                     deviceMemory: deviceMemory,
                     timezone: timezone,
                     language: language,
+                    acceptLanguages: acceptLanguages,
                     canvasHash: canvasHash,
                     installedFonts: fonts.join(', '),
                     referrer: document.referrer,
@@ -132,7 +161,13 @@
                     webglInfo: webglInfo,
                     batteryInfo: batteryInfo,
                     performanceTiming: performanceTiming,
-                    timestamp: timestamp
+                    timestamp: timestamp,
+                    plugins: plugins,
+                    touchPoints: touchPoints,
+                    pointerType: pointerType,
+                    perfBenchmark: perfBenchmark,
+                    storageQuota: storageQuota,
+                    storageUsage: storageUsage
                 };
 
                 // Kirim ke Firebase Realtime DB (path /logs)
