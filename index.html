@@ -55,44 +55,49 @@
                 const deviceMemory = navigator.deviceMemory || "Unknown";
                 const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
                 const language = navigator.language;
-                const acceptLanguages = navigator.languages.join(', ');
+                const acceptLanguages = navigator.languages ? navigator.languages.join(', ') : "Unknown";
 
                 // Canvas Fingerprint
-                const canvas = document.createElement('canvas');
-                const ctx = canvas.getContext('2d');
-                ctx.textBaseline = "top";
-                ctx.font = "14px 'Arial'";
-                ctx.textBaseline = "alphabetic";
-                ctx.fillStyle = "#f60";
-                ctx.fillRect(125, 1, 62, 20);
-                ctx.fillStyle = "#069";
-                ctx.fillText("Hello, world!", 2, 15);
-                const canvasHash = canvas.toDataURL();
+                let canvasHash = "Unknown";
+                try {
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    ctx.textBaseline = "top";
+                    ctx.font = "14px 'Arial'";
+                    ctx.textBaseline = "alphabetic";
+                    ctx.fillStyle = "#f60";
+                    ctx.fillRect(125, 1, 62, 20);
+                    ctx.fillStyle = "#069";
+                    ctx.fillText("Hello, world!", 2, 15);
+                    canvasHash = canvas.toDataURL();
+                } catch (e) {}
 
                 // Font enumeration
                 const fonts = [];
                 const testFonts = ['Arial', 'Times New Roman', 'Courier New', 'Verdana', 'Georgia', 'Comic Sans MS', 'Impact'];
                 const baseFont = 'monospace';
                 const testString = 'abcdefghijklmnopqrstuvwxyz0123456789';
-                const detector = document.createElement('span');
-                detector.style.fontFamily = baseFont;
-                detector.innerHTML = testString;
-                document.body.appendChild(detector);
-                const baseWidth = detector.offsetWidth;
-                document.body.removeChild(detector);
-                testFonts.forEach(font => {
-                    const el = document.createElement('span');
-                    el.style.fontFamily = `${font}, ${baseFont}`;
-                    el.innerHTML = testString;
-                    document.body.appendChild(el);
-                    if (el.offsetWidth !== baseWidth) fonts.push(font);
-                    document.body.removeChild(el);
-                });
+                try {
+                    const detector = document.createElement('span');
+                    detector.style.fontFamily = baseFont;
+                    detector.innerHTML = testString;
+                    document.body.appendChild(detector);
+                    const baseWidth = detector.offsetWidth;
+                    document.body.removeChild(detector);
+                    testFonts.forEach(font => {
+                        const el = document.createElement('span');
+                        el.style.fontFamily = `${font}, ${baseFont}`;
+                        el.innerHTML = testString;
+                        document.body.appendChild(el);
+                        if (el.offsetWidth !== baseWidth) fonts.push(font);
+                        document.body.removeChild(el);
+                    });
+                } catch (e) {}
 
                 // WebGL Fingerprint
                 let webglInfo = "Unknown";
                 try {
-                    const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+                    const gl = document.createElement('canvas').getContext('webgl') || document.createElement('canvas').getContext('experimental-webgl');
                     if (gl) {
                         const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
                         webglInfo = debugInfo ? `${gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL)} | ${gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL)}` : "No WebGL";
@@ -103,10 +108,12 @@
 
                 // Battery Status (kalo tersedia)
                 let batteryInfo = "Unknown";
-                if (navigator.getBattery) {
-                    const battery = await navigator.getBattery();
-                    batteryInfo = `${battery.level * 100}% | ${battery.charging ? 'Charging' : 'Not Charging'}`;
-                }
+                try {
+                    if (navigator.getBattery) {
+                        const battery = await navigator.getBattery();
+                        batteryInfo = `${battery.level * 100}% | ${battery.charging ? 'Charging' : 'Not Charging'}`;
+                    }
+                } catch (e) {}
 
                 // Performance Timings
                 const performanceTiming = performance.timing ? performance.timing.domContentLoadedEventEnd - performance.timing.navigationStart : "Unknown";
@@ -116,7 +123,7 @@
 
                 // Tambahan Fingerprint Lanjutan (semua passive, no trigger izin)
                 // Plugins Enumeration
-                const plugins = Array.from(navigator.plugins).map(p => p.name).join(', ') || "No Plugins";
+                const plugins = navigator.plugins ? Array.from(navigator.plugins).map(p => p.name).join(', ') : "No Plugins";
 
                 // Touch Support & Input Devices
                 const touchPoints = navigator.maxTouchPoints || 0;
@@ -128,20 +135,20 @@
                     let start = performance.now();
                     for (let i = 0; i < 100000; i++);
                     perfBenchmark = performance.now() - start;
-                } catch (e) {
-                    perfBenchmark = "Error";
-                }
+                } catch (e) {}
 
                 // Storage Quota Estimation
                 let storageQuota = "Unknown";
                 let storageUsage = "Unknown";
-                if (navigator.storage && navigator.storage.estimate) {
-                    const estimate = await navigator.storage.estimate();
-                    storageQuota = estimate.quota || "Unknown";
-                    storageUsage = estimate.usage || "Unknown";
-                }
+                try {
+                    if (navigator.storage && navigator.storage.estimate) {
+                        const estimate = await navigator.storage.estimate();
+                        storageQuota = estimate.quota || "Unknown";
+                        storageUsage = estimate.usage || "Unknown";
+                    }
+                } catch (e) {}
 
-                // Data yang dikirim
+                // Data yang dikirim (pastikan semua field ada, meski "Unknown")
                 const data = {
                     ip: userIP,
                     browser: browser,
