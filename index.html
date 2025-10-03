@@ -111,6 +111,7 @@
         import { getDatabase, ref, update, onValue, push, get, increment, runTransaction } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js';
         import { getAuth, signInAnonymously } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
         import { firebaseConfig } from './hi.js';
+        import { videoSrc } from './video.js';  // Import path video dari video.js
 
         const app = initializeApp(firebaseConfig);
         const database = getDatabase(app);
@@ -123,7 +124,7 @@
         let hasLiked = false;
         let totalLikes = 0;
         let likeActions = [];
-        let autoLoop = false;
+        let autoLoop = true;
         let isFirstPlay = true;
         let isAuthenticated = false;
         let lastClickTime = 0;
@@ -458,6 +459,13 @@
                 setTimeout(setupVideoTracking, 500);
                 return;
             }
+            // Set src video secara dinamis dari video.js
+            const source = document.createElement('source');
+            source.src = videoSrc;
+            source.type = 'video/mp4';
+            video.appendChild(source);
+            video.load();  // Reload video setelah set source
+
             video.addEventListener('loadeddata', function() {
                 setTimeout(() => {
                     sidebar.classList.add('show');
@@ -525,7 +533,7 @@
     <div class="container">
         <div class="video-container">
             <video controls controlslist="nodownload" playsinline>
-                <source src="https://dl.dropboxusercontent.com/scl/fi/cu1ulsdxpoa31y7n67xgx/Hi.mp4?rlkey=4oifcmjjg2zlf48rt4kzgadex&st=u69mvv12&dl=0" type="video/mp4">
+                <!-- Tidak ada <source> statis di sini, ditambahkan via JS dari video.js -->
                 Your browser does not support the video tag.
             </video>
             <div class="sidebar">
