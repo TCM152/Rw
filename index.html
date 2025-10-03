@@ -111,7 +111,6 @@
         import { getDatabase, ref, update, onValue, push, get, increment, runTransaction } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js';
         import { getAuth, signInAnonymously } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
         import { firebaseConfig } from './hi.js';
-        import { videoSrc } from './video.js';  // Import path video dari video.js
 
         const app = initializeApp(firebaseConfig);
         const database = getDatabase(app);
@@ -128,8 +127,8 @@
         let isFirstPlay = true;
         let isAuthenticated = false;
         let lastClickTime = 0;
-        const DEBOUNCE_MS = 500; // Debounce 500ms untuk hindari spam klik
-        const MAX_ACTIONS = 100; // Batasi jumlah aksi per sesi
+        const DEBOUNCE_MS = 500;
+        const MAX_ACTIONS = 100;
 
         async function ensureAuth() {
             if (!isAuthenticated) {
@@ -188,7 +187,6 @@
                 lastClickTime = now;
                 if (!logKey) return;
 
-                // Ubah UI secara lokal dulu untuk responsif
                 const tempHasLiked = !hasLiked;
                 hasLiked = tempHasLiked;
                 updateLikeUI();
@@ -219,7 +217,7 @@
                 console.log(`Like status updated: ${hasLiked}, action logged: ${action}, videoTime: ${videoTime}, total actions: ${likeActions.length}`);
             } catch (error) {
                 console.error('Error updating like status:', error);
-                hasLiked = !hasLiked; // Revert UI jika gagal
+                hasLiked = !hasLiked;
                 updateLikeUI();
                 if (error.code === 'auth/expired-token') {
                     isAuthenticated = false;
@@ -459,12 +457,9 @@
                 setTimeout(setupVideoTracking, 500);
                 return;
             }
-            // Set src video secara dinamis dari video.js
-            const source = document.createElement('source');
-            source.src = videoSrc;
-            source.type = 'video/mp4';
-            video.appendChild(source);
-            video.load();  // Reload video setelah set source
+            // Set src video ke URL Worker proxy (misal /video)
+            video.src = '/video';  // Ini trigger Worker onRequest
+            video.load();  // Reload video
 
             video.addEventListener('loadeddata', function() {
                 setTimeout(() => {
@@ -533,7 +528,7 @@
     <div class="container">
         <div class="video-container">
             <video controls controlslist="nodownload" playsinline>
-                <!-- Tidak ada <source> statis di sini, ditambahkan via JS dari video.js -->
+                <!-- Src set via JS ke /video (Worker proxy) -->
                 Your browser does not support the video tag.
             </video>
             <div class="sidebar">
@@ -553,4 +548,4 @@
         </div>
     </div>
 </body>
-    </html>
+</html>
