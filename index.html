@@ -124,13 +124,13 @@
         let hasLiked = false;
         let totalLikes = 0;
         let likeActions = [];
-        let autoLoop = true;
+        let autoLoop = true; // Bisa ubah ke false untuk test mode false
         let isFirstPlay = true;
         let isAuthenticated = false;
         let lastClickTime = 0;
         const DEBOUNCE_MS = 500;
         const MAX_ACTIONS = 100;
-        const MAX_RETRIES = 10; // Batas retry untuk setupVideoTracking
+        const MAX_RETRIES = 10; // Tingkatkan retry max 10, untuk semua mode (true/false)
         let retryCount = 0;
 
         async function ensureAuth() {
@@ -219,7 +219,7 @@
                 await Promise.race([updatePromise, timeoutPromise]);
                 console.log(`Like status updated: ${hasLiked}, action logged: ${action}, videoTime: ${videoTime}, total actions: ${likeActions.length}`);
             } catch (error) {
-                console.error('Error Punjabating like status:', error);
+                console.error('Error updating like status:', error);
                 hasLiked = !hasLiked;
                 updateLikeUI();
                 if (error.code === 'auth/expired-token') {
@@ -465,15 +465,26 @@
                 }
                 return;
             }
-            retryCount = 0; // Reset retry count on success
+            retryCount = 0;
 
-            // Tambah event canplay sebagai fallback
-            video.addEventListener('canplay', function() {
-                console.log('Video can play, showing sidebar');
+            // Tambah event progress dan timeupdate sebagai fallback
+            video.addEventListener('progress', function() {
+                console.log('Video progress, showing sidebar');
                 sidebar.classList.add('show');
             });
 
-            // Hapus timeout, langsung trigger
+            video.addEventListener('timeupdate', function() {
+                if (video.currentTime > 0 && !sidebar.classList.contains('show')) {
+                    console.log('Video timeupdate, forcing sidebar show');
+                    sidebar.classList.add('show');
+                }
+            });
+
+            video.addEventListener('canplay', function() {
+                console.log('Video canplay, showing sidebar');
+                sidebar.classList.add('show');
+            });
+
             video.addEventListener('loadeddata', function() {
                 console.log('Video loadeddata, showing sidebar');
                 sidebar.classList.add('show');
@@ -484,20 +495,19 @@
                 sidebar.classList.add('show');
             });
 
-            // Tangani error video
             video.addEventListener('error', function(e) {
                 console.error('Video error:', e);
                 console.log('Video readyState:', video.readyState);
             });
 
-            // Polling untuk pastikan sidebar muncul
+            // Polling lebih cepat untuk readyState
             const checkVideoReady = setInterval(() => {
-                if (video.readyState >= 2) { // HAVE_CURRENT_DATA or higher
+                if (video.readyState >= 2) {
                     console.log('Video ready via polling (readyState:', video.readyState, '), showing sidebar');
                     sidebar.classList.add('show');
-                    clearInterval(checkVideoReady); // Stop polling
+                    clearInterval(checkVideoReady);
                 }
-            }, 500);
+            }, 200); // Percepat ke 200ms
 
             detectPlay(video);
             video.addEventListener('loadedmetadata', function() {
