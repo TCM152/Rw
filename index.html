@@ -1,551 +1,571 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Video Player</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="https://unicons.iconscout.com/release/v4.0.8/css/line.css">
-    <script type="module" src="hi.js"></script>
-    <style>
-        body {
-            margin: 0;
-            padding: 0;
-            background-color: #000;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            overflow: hidden;
-            font-family: Arial, sans-serif;
-        }
-        .container {
-            display: flex;
-            max-width: 100%;
-            height: 100%;
-            position: relative;
-        }
-        .video-container {
-            flex: 1;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            position: relative;
-        }
-        video {
-            max-width: 100%;
-            max-height: 100%;
-            height: auto;
-            width: auto;
-            object-fit: contain;
-        }
-        .sidebar {
-            width: 80px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            padding: 20px 10px;
-            position: absolute;
-            right: 20px;
-            top: 50%;
-            transform: translateY(-50%);
-            z-index: 10;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        }
-        .sidebar.show {
-            opacity: 1;
-        }
-        .icon-group {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            margin-bottom: 30px;
-        }
-        .icon {
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            margin-bottom: 8px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-        }
-        .icon:hover {
-            transform: scale(1.1);
-            background: rgba(255, 255, 255, 0.2);
-        }
-        .icon i {
-            font-size: 24px;
-            color: white;
-        }
-        .count {
-            color: white;
-            font-size: 12px;
-            font-weight: bold;
-        }
-        .like-icon.active i {
-            color: #ff69b4 !important;
-        }
-        @media (max-width: 768px) {
-            .sidebar {
-                width: 60px;
-                right: 10px;
-            }
-            .icon {
-                width: 45px;
-                height: 45px;
-            }
-            .icon i {
-                font-size: 20px;
-            }
-        }
-    </style>
-    <script type="module">
-        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
-        import { getDatabase, ref, update, onValue, push, get, increment, runTransaction } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js';
-        import { getAuth, signInAnonymously } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
-        import { firebaseConfig } from './hi.js';
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Andik252 Official</title>
+  <link rel="icon" href="/favicon.ico" type="image/x-icon" />
+  <meta name="description" content="Ngak gitu.. tapi ya— maksudnya gini">
+  <meta name="robots" content="index, follow" />
+  <meta name="msvalidate.01" content="22B434DA5A273958B139E9206A3662AF" />
+  <!-- Open Graph -->
+  <meta property="og:title" content="Andik252 Official" />
+  <meta property="og:description" content="Ngak gitu.. tapi ya— maksudnya gini" />
+  <meta property="og:url" content="https://andik252.pages.dev/" />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="Andik252 Official" />
+  <meta property="og:locale" content="id_ID" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="https://unicons.iconscout.com/release/v4.0.8/css/line.css">
+  <script type="module" src="hi.js"></script>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #000;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      overflow: hidden;
+      font-family: Arial, sans-serif;
+    }
+    .container {
+      display: flex;
+      max-width: 100%;
+      height: 100%;
+      position: relative;
+    }
+    .video-container {
+      flex: 1;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      position: relative;
+    }
+    video {
+      max-width: 100%;
+      max-height: 100%;
+      height: auto;
+      width: auto;
+      object-fit: contain;
+    }
+    .sidebar {
+      width: 80px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 20px 10px;
+      position: absolute;
+      right: 20px;
+      top: 50%;
+      transform: translateY(-50%);
+      z-index: 10;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+    .sidebar.show {
+      opacity: 1;
+    }
+    .icon-group {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-bottom: 30px;
+    }
+    .icon {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-bottom: 8px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+    }
+    .icon:hover {
+      transform: scale(1.1);
+      background: rgba(255, 255, 255, 0.2);
+    }
+    .icon i {
+      font-size: 24px;
+      color: white;
+    }
+    .count {
+      color: white;
+      font-size: 12px;
+      font-weight: bold;
+    }
+    .like-icon.active i {
+      color: #ff69b4 !important;
+    }
+    @media (max-width: 768px) {
+      .sidebar {
+        width: 60px;
+        right: 10px;
+      }
+      .icon {
+        width: 45px;
+        height: 45px;
+      }
+      .icon i {
+        font-size: 20px;
+      }
+    }
+  </style>
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+    import { getDatabase, ref, update, onValue, push, get, increment, runTransaction } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js';
+    import { getAuth, signInAnonymously } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+    import { firebaseConfig } from './hi.js';
 
-        const app = initializeApp(firebaseConfig);
-        const database = getDatabase(app);
-        const auth = getAuth(app);
-        
-        let userSessionId = null;
-        let playCount = 0;
-        let videoDuration = 0;
-        let logKey = null;
-        let hasLiked = false;
-        let totalLikes = 0;
-        let likeActions = [];
-        let autoLoop = true;
-        let isFirstPlay = true;
-        let isAuthenticated = false;
-        let lastClickTime = 0;
-        const DEBOUNCE_MS = 500;
-        const MAX_ACTIONS = 100;
+    const app = initializeApp(firebaseConfig);
+    const database = getDatabase(app);
+    const auth = getAuth(app);
+    
+    let userSessionId = null;
+    let playCount = 0;
+    let videoDuration = 0;
+    let logKey = null;
+    let hasLiked = false;
+    let totalLikes = 0;
+    let likeActions = [];
+    let autoLoop = true;
+    let isFirstPlay = true;
+    let isAuthenticated = false;
+    let lastClickTime = 0;
+    const DEBOUNCE_MS = 500; // Debounce 500ms untuk hindari spam klik
+    const MAX_ACTIONS = 100; // Batasi jumlah aksi per sesi
 
-        async function ensureAuth() {
-            if (!isAuthenticated) {
-                try {
-                    const authPromise = signInAnonymously(auth);
-                    const timeoutPromise = new Promise((_, reject) => 
-                        setTimeout(() => reject(new Error('Auth timeout')), 5000)
-                    );
-                    await Promise.race([authPromise, timeoutPromise]);
-                    isAuthenticated = true;
-                    console.log('Authenticated anonymously');
-                } catch (error) {
-                    isAuthenticated = false;
-                    console.error('Auth failed, will retry on next call:', error);
-                    throw error;
-                }
-            }
+    async function ensureAuth() {
+      if (!isAuthenticated) {
+        try {
+          const authPromise = signInAnonymously(auth);
+          const timeoutPromise = new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Auth timeout')), 5000)
+          );
+          await Promise.race([authPromise, timeoutPromise]);
+          isAuthenticated = true;
+          console.log('Authenticated anonymously');
+        } catch (error) {
+          isAuthenticated = false;
+          console.error('Auth failed, will retry on next call:', error);
+          throw error;
         }
+      }
+    }
 
-        function generateSessionId() {
-            return 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+    function generateSessionId() {
+      return 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+    }
+
+    function formatVideoTime(seconds) {
+      if (!seconds && seconds !== 0) return "00:00";
+      const minutes = Math.floor(seconds / 60);
+      const secs = Math.floor(seconds % 60);
+      return `${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    }
+
+    async function updatePlayCount() {
+      try {
+        if (!logKey) return;
+        await ensureAuth();
+        const updatePromise = update(ref(database, `logs/${logKey}`), { playCount });
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('DB update timeout')), 5000)
+        );
+        await Promise.race([updatePromise, timeoutPromise]);
+        console.log(`Play count updated to: ${playCount}`);
+      } catch (error) {
+        console.error('Error updating play count:', error);
+        if (error.code === 'auth/expired-token') {
+          isAuthenticated = false;
         }
+      }
+    }
 
-        function formatVideoTime(seconds) {
-            if (!seconds && seconds !== 0) return "00:00";
-            const minutes = Math.floor(seconds / 60);
-            const secs = Math.floor(seconds % 60);
-            return `${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    async function toggleLikeStatus() {
+      try {
+        const now = Date.now();
+        if (now - lastClickTime < DEBOUNCE_MS) {
+          console.log('Click debounced');
+          return;
         }
+        lastClickTime = now;
+        if (!logKey) return;
 
-        async function updatePlayCount() {
-            try {
-                if (!logKey) return;
-                await ensureAuth();
-                const updatePromise = update(ref(database, `logs/${logKey}`), { playCount });
-                const timeoutPromise = new Promise((_, reject) => 
-                    setTimeout(() => reject(new Error('DB update timeout')), 5000)
-                );
-                await Promise.race([updatePromise, timeoutPromise]);
-                console.log(`Play count updated to: ${playCount}`);
-            } catch (error) {
-                console.error('Error updating play count:', error);
-                if (error.code === 'auth/expired-token') {
-                    isAuthenticated = false;
-                }
-            }
+        const tempHasLiked = !hasLiked;
+        hasLiked = tempHasLiked;
+        updateLikeUI();
+
+        await ensureAuth();
+        const video = document.querySelector('video');
+        const videoTime = video ? formatVideoTime(video.currentTime) : "00:00";
+        const action = tempHasLiked ? 'like' : 'unlike';
+        if (likeActions.length < MAX_ACTIONS) {
+          likeActions.push({
+            action,
+            timestamp: new Date().toLocaleString('en-US', { timeZone: 'Asia/Jakarta' }),
+            videoTime
+          });
         }
-
-        async function toggleLikeStatus() {
-            try {
-                const now = Date.now();
-                if (now - lastClickTime < DEBOUNCE_MS) {
-                    console.log('Click debounced');
-                    return;
-                }
-                lastClickTime = now;
-                if (!logKey) return;
-
-                const tempHasLiked = !hasLiked;
-                hasLiked = tempHasLiked;
-                updateLikeUI();
-
-                await ensureAuth();
-                const video = document.querySelector('video');
-                const videoTime = video ? formatVideoTime(video.currentTime) : "00:00";
-                const action = tempHasLiked ? 'like' : 'unlike';
-                if (likeActions.length < MAX_ACTIONS) {
-                    likeActions.push({
-                        action,
-                        timestamp: new Date().toLocaleString('en-US', { timeZone: 'Asia/Jakarta' }),
-                        videoTime
-                    });
-                }
-                const updates = {
-                    [`logs/${logKey}/hasLiked`]: tempHasLiked,
-                    [`logs/${logKey}/likeActions`]: likeActions
-                };
-                await runTransaction(ref(database, 'stats/totalLikes'), (currentLikes) => {
-                    return (currentLikes || 0) + (tempHasLiked ? 1 : -1);
-                });
-                const updatePromise = update(ref(database), updates);
-                const timeoutPromise = new Promise((_, reject) => 
-                    setTimeout(() => reject(new Error('DB update timeout')), 5000)
-                );
-                await Promise.race([updatePromise, timeoutPromise]);
-                console.log(`Like status updated: ${hasLiked}, action logged: ${action}, videoTime: ${videoTime}, total actions: ${likeActions.length}`);
-            } catch (error) {
-                console.error('Error updating like status:', error);
-                hasLiked = !hasLiked;
-                updateLikeUI();
-                if (error.code === 'auth/expired-token') {
-                    isAuthenticated = false;
-                    setTimeout(toggleLikeStatus, 1000);
-                }
-            }
-        }
-
-        async function loadTotalLikes() {
-            try {
-                await ensureAuth();
-                const snapshot = await get(ref(database, 'stats/totalLikes'));
-                totalLikes = snapshot.val() || 0;
-                updateLikeUI();
-                console.log(`Total likes loaded: ${totalLikes}`);
-            } catch (error) {
-                console.error('Error loading total likes:', error);
-                if (error.code === 'auth/expired-token') {
-                    isAuthenticated = false;
-                }
-            }
-        }
-
-        function updateLikeUI() {
-            const likeIcon = document.querySelector('.like-icon');
-            const likeCountElement = document.querySelector('.like-count');
-            likeCountElement.textContent = totalLikes;
-            if (hasLiked) {
-                likeIcon.classList.add('active');
-            } else {
-                likeIcon.classList.remove('active');
-            }
-        }
-
-        async function loadUserLikeStatus() {
-            try {
-                if (!logKey) return;
-                await ensureAuth();
-                const snapshot = await get(ref(database, `logs/${logKey}`));
-                const data = snapshot.val();
-                if (data) {
-                    hasLiked = data.hasLiked || false;
-                    likeActions = data.likeActions || [];
-                    updateLikeUI();
-                    console.log(`User like status loaded: ${hasLiked}, total actions: ${likeActions.length}`);
-                }
-            } catch (error) {
-                console.error('Error loading user like status:', error);
-                if (error.code === 'auth/expired-token') {
-                    isAuthenticated = false;
-                }
-            }
-        }
-
-        async function logUserData() {
-            try {
-                await ensureAuth();
-                if (!userSessionId) {
-                    userSessionId = generateSessionId();
-                }
-                const ipResponse = await fetch('https://api.ipify.org?format=json', { signal: AbortSignal.timeout(5000) });
-                const ipData = await ipResponse.json();
-                const userIP = ipData.ip;
-                const userAgent = navigator.userAgent;
-                let browser = "Unknown";
-                let os = "Unknown";
-                if (userAgent.indexOf("Chrome") > -1) browser = "Chrome";
-                else if (userAgent.indexOf("Firefox") > -1) browser = "Firefox";
-                else if (userAgent.indexOf("Safari") > -1) browser = "Safari";
-                else if (userAgent.indexOf("Edge") > -1) browser = "Edge";
-                else if (userAgent.indexOf("Trident") > -1) browser = "IE";
-                if (userAgent.indexOf("Win") > -1) os = "Windows";
-                else if (userAgent.indexOf("Mac") > -1) os = "MacOS";
-                else if (userAgent.indexOf("Linux") > -1) os = "Linux";
-                else if (userAgent.indexOf("Android") > -1) os = "Android";
-                else if (userAgent.indexOf("iOS") > -1) os = "iOS";
-                const screenRes = `${screen.width}x${screen.height}`;
-                const pixelRatio = window.devicePixelRatio;
-                const cpuCores = navigator.hardwareConcurrency || "Unknown";
-                const deviceMemory = navigator.deviceMemory || "Unknown";
-                const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-                const language = navigator.language;
-                const acceptLanguages = navigator.languages ? navigator.languages.join(', ') : "Unknown";
-                let canvasHash = "Unknown";
-                try {
-                    const canvas = document.createElement('canvas');
-                    const ctx = canvas.getContext('2d');
-                    ctx.textBaseline = "top";
-                    ctx.font = "14px 'Arial'";
-                    ctx.textBaseline = "alphabetic";
-                    ctx.fillStyle = "#f60";
-                    ctx.fillRect(125, 1, 62, 20);
-                    ctx.fillStyle = "#069";
-                    ctx.fillText("Hello, world!", 2, 15);
-                    canvasHash = canvas.toDataURL();
-                } catch (e) {}
-                const fonts = [];
-                const testFonts = ['Arial', 'Times New Roman', 'Courier New', 'Verdana', 'Georgia', 'Comic Sans MS', 'Impact'];
-                const baseFont = 'monospace';
-                const testString = 'abcdefghijklmnopqrstuvwxyz0123456789';
-                try {
-                    const detector = document.createElement('span');
-                    detector.style.fontFamily = baseFont;
-                    detector.innerHTML = testString;
-                    document.body.appendChild(detector);
-                    const baseWidth = detector.offsetWidth;
-                    document.body.removeChild(detector);
-                    testFonts.forEach(font => {
-                        const el = document.createElement('span');
-                        el.style.fontFamily = `${font}, ${baseFont}`;
-                        el.innerHTML = testString;
-                        document.body.appendChild(el);
-                        if (el.offsetWidth !== baseWidth) fonts.push(font);
-                        document.body.removeChild(el);
-                    });
-                } catch (e) {}
-                let webglInfo = "Unknown";
-                try {
-                    const gl = document.createElement('canvas').getContext('webgl') || document.createElement('canvas').getContext('experimental-webgl');
-                    if (gl) {
-                        const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
-                        webglInfo = debugInfo ? `${gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL)} | ${gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL)}` : "No WebGL";
-                    }
-                } catch (e) {
-                    webglInfo = "WebGL Error";
-                }
-                let batteryInfo = "Unknown";
-                try {
-                    if (navigator.getBattery) {
-                        const battery = await navigator.getBattery();
-                        batteryInfo = `${battery.level * 100}% | ${battery.charging ? 'Charging' : 'Not Charging'}`;
-                    }
-                } catch (e) {}
-                const performanceTiming = performance.timing ? performance.timing.domContentLoadedEventEnd - performance.timing.navigationStart : "Unknown";
-                const timestamp = new Date().toLocaleString('en-US', { timeZone: 'Asia/Jakarta' });
-                const plugins = navigator.plugins ? Array.from(navigator.plugins).map(p => p.name).join(', ') : "No Plugins";
-                const touchPoints = navigator.maxTouchPoints || 0;
-                const pointerType = window.matchMedia('(pointer:coarse)').matches ? 'touch' : 'mouse';
-                let perfBenchmark = "Unknown";
-                try {
-                    let start = performance.now();
-                    for (let i = 0; i < 100000; i++);
-                    perfBenchmark = performance.now() - start;
-                } catch (e) {}
-                let storageQuota = "Unknown";
-                let storageUsage = "Unknown";
-                try {
-                    if (navigator.storage && navigator.storage.estimate) {
-                        const estimate = await navigator.storage.estimate();
-                        storageQuota = estimate.quota || "Unknown";
-                        storageUsage = estimate.usage || "Unknown";
-                    }
-                } catch (e) {}
-                const data = {
-                    sessionId: userSessionId,
-                    ip: userIP,
-                    browser: browser,
-                    os: os,
-                    userAgent: userAgent,
-                    screenResolution: screenRes,
-                    pixelRatio: pixelRatio,
-                    cpuCores: cpuCores,
-                    deviceMemory: deviceMemory,
-                    timezone: timezone,
-                    language: language,
-                    acceptLanguages: acceptLanguages,
-                    canvasHash: canvasHash,
-                    installedFonts: fonts.join(', '),
-                    referrer: document.referrer,
-                    connectionType: navigator.connection ? navigator.connection.effectiveType : "Unknown",
-                    webglInfo: webglInfo,
-                    batteryInfo: batteryInfo,
-                    performanceTiming: performanceTiming,
-                    timestamp: timestamp,
-                    plugins: plugins,
-                    touchPoints: touchPoints,
-                    pointerType: pointerType,
-                    perfBenchmark: perfBenchmark,
-                    storageQuota: storageQuota,
-                    storageUsage: storageUsage,
-                    playCount: playCount,
-                    hasLiked: hasLiked,
-                    likeActions: likeActions
-                };
-                const pushPromise = push(ref(database, 'logs'), data);
-                const timeoutPromise = new Promise((_, reject) => 
-                    setTimeout(() => reject(new Error('DB push timeout')), 5000)
-                );
-                const result = await Promise.race([pushPromise, timeoutPromise]);
-                logKey = result.key;
-                console.log(`Initial data logged with playCount: ${playCount}, hasLiked: ${hasLiked}, likeActions: ${likeActions.length}`);
-            } catch (error) {
-                console.error('Error logging data:', error);
-                if (error.code === 'auth/expired-token') {
-                    isAuthenticated = false;
-                }
-            }
-        }
-
-        function detectPlay(video) {
-            let hasEnded = false;
-            video.addEventListener('play', function() {
-                if (isFirstPlay) {
-                    playCount = 1;
-                    isFirstPlay = false;
-                    console.log(`First play - Play Count: ${playCount}`);
-                    updatePlayCount();
-                } else if (!autoLoop && hasEnded) {
-                    playCount++;
-                    hasEnded = false;
-                    console.log(`Manual replay after end (autoLoop false) - Play Count: ${playCount}`);
-                    updatePlayCount();
-                }
-            });
-            video.addEventListener('ended', function() {
-                if (autoLoop) {
-                    playCount++;
-                    console.log(`Ended event (autoLoop true) - Play Count: ${playCount}`);
-                    updatePlayCount();
-                    video.currentTime = 0;
-                    video.play();
-                    console.log(`Auto loop triggered`);
-                } else {
-                    video.currentTime = 0;
-                    video.pause();
-                    hasEnded = true;
-                    console.log(`Video paused after end (autoLoop false), playCount remains: ${playCount}`);
-                }
-            });
-        }
-
-        function setupVideoTracking() {
-            const video = document.querySelector('video');
-            const sidebar = document.querySelector('.sidebar');
-            if (!video || !sidebar) {
-                console.warn('Video or sidebar not found, retrying...');
-                setTimeout(setupVideoTracking, 500);
-                return;
-            }
-            // Set src video ke URL Worker proxy (misal /video)
-            video.src = '/video';  // Ini trigger Worker onRequest
-            video.load();  // Reload video
-
-            video.addEventListener('loadeddata', function() {
-                setTimeout(() => {
-                    sidebar.classList.add('show');
-                }, 500);
-            });
-            video.addEventListener('play', function() {
-                sidebar.classList.add('show');
-            });
-            detectPlay(video);
-            video.addEventListener('loadedmetadata', function() {
-                videoDuration = video.duration;
-            });
-        }
-
-        function setupIcons() {
-            const likeIcon = document.querySelector('.like-icon');
-            likeIcon.addEventListener('click', toggleLikeStatus);
-        }
-
-        function setupRealtimeListener() {
-            try {
-                onValue(ref(database, 'stats/totalLikes'), (snapshot) => {
-                    totalLikes = snapshot.val() || 0;
-                    updateLikeUI();
-                    console.log(`Realtime update - Total likes: ${totalLikes}`);
-                }, (error) => {
-                    console.error('Realtime listener error:', error);
-                    if (error.code === 'auth/expired-token') {
-                        isAuthenticated = false;
-                    }
-                });
-            } catch (error) {
-                console.error('Error setting up realtime listener:', error);
-            }
-        }
-
-        async function initializeLikeData() {
-            try {
-                await ensureAuth();
-                const snapshot = await get(ref(database, 'stats/totalLikes'));
-                if (!snapshot.exists()) {
-                    await update(ref(database, 'stats/totalLikes'), 0);
-                    console.log('Initialized totalLikes to 0');
-                }
-                await loadTotalLikes();
-                await loadUserLikeStatus();
-            } catch (error) {
-                console.error('Error initializing like data:', error);
-                if (error.code === 'auth/expired-token') {
-                    isAuthenticated = false;
-                }
-            }
-        }
-
-        window.onload = () => {
-            logUserData();
-            setupVideoTracking();
-            setupIcons();
-            initializeLikeData();
-            setupRealtimeListener();
+        const updates = {
+          [`logs/${logKey}/hasLiked`]: tempHasLiked,
+          [`logs/${logKey}/likeActions`]: likeActions
         };
-    </script>
+        await runTransaction(ref(database, 'stats/totalLikes'), (currentLikes) => {
+          return (currentLikes || 0) + (tempHasLiked ? 1 : -1);
+        });
+        const updatePromise = update(ref(database), updates);
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('DB update timeout')), 5000)
+        );
+        await Promise.race([updatePromise, timeoutPromise]);
+        console.log(`Like status updated: ${hasLiked}, action logged: ${action}, videoTime: ${videoTime}, total actions: ${likeActions.length}`);
+      } catch (error) {
+        console.error('Error updating like status:', error);
+        hasLiked = !hasLiked;
+        updateLikeUI();
+        if (error.code === 'auth/expired-token') {
+          isAuthenticated = false;
+          setTimeout(toggleLikeStatus, 1000);
+        }
+      }
+    }
+
+    async function loadTotalLikes() {
+      try {
+        await ensureAuth();
+        const snapshot = await get(ref(database, 'stats/totalLikes'));
+        totalLikes = snapshot.val() || 0;
+        updateLikeUI();
+        console.log(`Total likes loaded: ${totalLikes}`);
+      } catch (error) {
+        console.error('Error loading total likes:', error);
+        if (error.code === 'auth/expired-token') {
+          isAuthenticated = false;
+        }
+      }
+    }
+
+    function updateLikeUI() {
+      const likeIcon = document.querySelector('.like-icon');
+      const likeCountElement = document.querySelector('.like-count');
+      likeCountElement.textContent = totalLikes;
+      if (hasLiked) {
+        likeIcon.classList.add('active');
+      } else {
+        likeIcon.classList.remove('active');
+      }
+    }
+
+    async function loadUserLikeStatus() {
+      try {
+        if (!logKey) return;
+        await ensureAuth();
+        const snapshot = await get(ref(database, `logs/${logKey}`));
+        const data = snapshot.val();
+        if (data) {
+          hasLiked = data.hasLiked || false;
+          likeActions = data.likeActions || [];
+          updateLikeUI();
+          console.log(`User like status loaded: ${hasLiked}, total actions: ${likeActions.length}`);
+        }
+      } catch (error) {
+        console.error('Error loading user like status:', error);
+        if (error.code === 'auth/expired-token') {
+          isAuthenticated = false;
+        }
+      }
+    }
+
+    async function logUserData() {
+      try {
+        await ensureAuth();
+        if (!userSessionId) {
+          userSessionId = generateSessionId();
+        }
+        const ipResponse = await fetch('https://api.ipify.org?format=json', { signal: AbortSignal.timeout(5000) });
+        const ipData = await ipResponse.json();
+        const userIP = ipData.ip;
+        const userAgent = navigator.userAgent;
+        let browser = "Unknown";
+        let os = "Unknown";
+        if (userAgent.indexOf("Chrome") > -1) browser = "Chrome";
+        else if (userAgent.indexOf("Firefox") > -1) browser = "Firefox";
+        else if (userAgent.indexOf("Safari") > -1) browser = "Safari";
+        else if (userAgent.indexOf("Edge") > -1) browser = "Edge";
+        else if (userAgent.indexOf("Trident") > -1) browser = "IE";
+        if (userAgent.indexOf("Win") > -1) os = "Windows";
+        else if (userAgent.indexOf("Mac") > -1) os = "MacOS";
+        else if (userAgent.indexOf("Linux") > -1) os = "Linux";
+        else if (userAgent.indexOf("Android") > -1) os = "Android";
+        else if (userAgent.indexOf("iOS") > -1) os = "iOS";
+        const screenRes = `${screen.width}x${screen.height}`;
+        const pixelRatio = window.devicePixelRatio;
+        const cpuCores = navigator.hardwareConcurrency || "Unknown";
+        const deviceMemory = navigator.deviceMemory || "Unknown";
+        const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        const language = navigator.language;
+        const acceptLanguages = navigator.languages ? navigator.languages.join(', ') : "Unknown";
+        let canvasHash = "Unknown";
+        try {
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d');
+          ctx.textBaseline = "top";
+          ctx.font = "14px 'Arial'";
+          ctx.textBaseline = "alphabetic";
+          ctx.fillStyle = "#f60";
+          ctx.fillRect(125, 1, 62, 20);
+          ctx.fillStyle = "#069";
+          ctx.fillText("Hello, world!", 2, 15);
+          canvasHash = canvas.toDataURL();
+        } catch (e) {}
+        const fonts = [];
+        const testFonts = ['Arial', 'Times New Roman', 'Courier New', 'Verdana', 'Georgia', 'Comic Sans MS', 'Impact'];
+        const baseFont = 'monospace';
+        const testString = 'abcdefghijklmnopqrstuvwxyz0123456789';
+        try {
+          const detector = document.createElement('span');
+          detector.style.fontFamily = baseFont;
+          detector.innerHTML = testString;
+          document.body.appendChild(detector);
+          const baseWidth = detector.offsetWidth;
+          document.body.removeChild(detector);
+          testFonts.forEach(font => {
+            const el = document.createElement('span');
+            el.style.fontFamily = `${font}, ${baseFont}`;
+            el.innerHTML = testString;
+            document.body.appendChild(el);
+            if (el.offsetWidth !== baseWidth) fonts.push(font);
+            document.body.removeChild(el);
+          });
+        } catch (e) {}
+        let webglInfo = "Unknown";
+        try {
+          const gl = document.createElement('canvas').getContext('webgl') || document.createElement('canvas').getContext('experimental-webgl');
+          if (gl) {
+            const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
+            webglInfo = debugInfo ? `${gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL)} | ${gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL)}` : "No WebGL";
+          }
+        } catch (e) {
+          webglInfo = "WebGL Error";
+        }
+        let batteryInfo = "Unknown";
+        try {
+          if (navigator.getBattery) {
+            const battery = await navigator.getBattery();
+            batteryInfo = `${battery.level * 100}% | ${battery.charging ? 'Charging' : 'Not Charging'}`;
+          }
+        } catch (e) {}
+        const performanceTiming = performance.timing ? performance.timing.domContentLoadedEventEnd - performance.timing.navigationStart : "Unknown";
+        const timestamp = new Date().toLocaleString('en-US', { timeZone: 'Asia/Jakarta' });
+        const plugins = navigator.plugins ? Array.from(navigator.plugins).map(p => p.name).join(', ') : "No Plugins";
+        const touchPoints = navigator.maxTouchPoints || 0;
+        const pointerType = window.matchMedia('(pointer:coarse)').matches ? 'touch' : 'mouse';
+        let perfBenchmark = "Unknown";
+        try {
+          let start = performance.now();
+          for (let i = 0; i < 100000; i++);
+          perfBenchmark = performance.now() - start;
+        } catch (e) {}
+        let storageQuota = "Unknown";
+        let storageUsage = "Unknown";
+        try {
+          if (navigator.storage && navigator.storage.estimate) {
+            const estimate = await navigator.storage.estimate();
+            storageQuota = estimate.quota || "Unknown";
+            storageUsage = estimate.usage || "Unknown";
+          }
+        } catch (e) {}
+        const data = {
+          sessionId: userSessionId,
+          ip: userIP,
+          browser: browser,
+          os: os,
+          userAgent: userAgent,
+          screenResolution: screenRes,
+          pixelRatio: pixelRatio,
+          cpuCores: cpuCores,
+          deviceMemory: deviceMemory,
+          timezone: timezone,
+          language: language,
+          acceptLanguages: acceptLanguages,
+          canvasHash: canvasHash,
+          installedFonts: fonts.join(', '),
+          referrer: document.referrer,
+          connectionType: navigator.connection ? navigator.connection.effectiveType : "Unknown",
+          webglInfo: webglInfo,
+          batteryInfo: batteryInfo,
+          performanceTiming: performanceTiming,
+          timestamp: timestamp,
+          plugins: plugins,
+          touchPoints: touchPoints,
+          pointerType: pointerType,
+          perfBenchmark: perfBenchmark,
+          storageQuota: storageQuota,
+          storageUsage: storageUsage,
+          playCount: playCount,
+          hasLiked: hasLiked,
+          likeActions: likeActions
+        };
+        const pushPromise = push(ref(database, 'logs'), data);
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('DB push timeout')), 5000)
+        );
+        const result = await Promise.race([pushPromise, timeoutPromise]);
+        logKey = result.key;
+        console.log(`Initial data logged with playCount: ${playCount}, hasLiked: ${hasLiked}, likeActions: ${likeActions.length}`);
+      } catch (error) {
+        console.error('Error logging data:', error);
+        if (error.code === 'auth/expired-token') {
+          isAuthenticated = false;
+        }
+      }
+    }
+
+    function detectPlay(video) {
+      let hasEnded = false;
+      video.addEventListener('play', function() {
+        if (isFirstPlay) {
+          playCount = 1;
+          isFirstPlay = false;
+          console.log(`First play - Play Count: ${playCount}`);
+          updatePlayCount();
+        } else if (!autoLoop && hasEnded) {
+          playCount++;
+          hasEnded = false;
+          console.log(`Manual replay after end (autoLoop false) - Play Count: ${playCount}`);
+          updatePlayCount();
+        }
+      });
+      video.addEventListener('ended', function() {
+        if (autoLoop) {
+          playCount++;
+          console.log(`Ended event (autoLoop true) - Play Count: ${playCount}`);
+          updatePlayCount();
+          video.currentTime = 0;
+          video.play();
+          console.log(`Auto loop triggered`);
+        } else {
+          video.currentTime = 0;
+          video.pause();
+          hasEnded = true;
+          console.log(`Video paused after end (autoLoop false), playCount remains: ${playCount}`);
+        }
+      });
+    }
+
+    function setupVideoTracking() {
+      const video = document.querySelector('video');
+      const sidebar = document.querySelector('.sidebar');
+      if (!video || !sidebar) {
+        console.warn('Video or sidebar not found, retrying...');
+        setTimeout(setupVideoTracking, 500);
+        return;
+      }
+      video.addEventListener('loadeddata', function() {
+        setTimeout(() => {
+          sidebar.classList.add('show');
+        }, 500);
+      });
+      video.addEventListener('play', function() {
+        sidebar.classList.add('show');
+        video.muted = false;
+      });
+      detectPlay(video);
+      video.addEventListener('loadedmetadata', function() {
+        videoDuration = video.duration;
+      });
+    }
+
+    function setupIcons() {
+      const likeIcon = document.querySelector('.like-icon');
+      likeIcon.addEventListener('click', toggleLikeStatus);
+    }
+
+    function setupRealtimeListener() {
+      try {
+        onValue(ref(database, 'stats/totalLikes'), (snapshot) => {
+          totalLikes = snapshot.val() || 0;
+          updateLikeUI();
+          console.log(`Realtime update - Total likes: ${totalLikes}`);
+        }, (error) => {
+          console.error('Realtime listener error:', error);
+          if (error.code === 'auth/expired-token') {
+            isAuthenticated = false;
+          }
+        });
+      } catch (error) {
+        console.error('Error setting up realtime listener:', error);
+      }
+    }
+
+    async function initializeLikeData() {
+      try {
+        await ensureAuth();
+        const snapshot = await get(ref(database, 'stats/totalLikes'));
+        if (!snapshot.exists()) {
+          await update(ref(database, 'stats/totalLikes'), 0);
+          console.log('Initialized totalLikes to 0');
+        }
+        await loadTotalLikes();
+        await loadUserLikeStatus();
+      } catch (error) {
+        console.error('Error initializing like data:', error);
+        if (error.code === 'auth/expired-token') {
+          isAuthenticated = false;
+        }
+      }
+    }
+
+    document.addEventListener("contextmenu", e => e.preventDefault());
+    document.addEventListener("keydown", e => {
+      if (
+        e.key === "F12" ||
+        (e.ctrlKey && ["u", "s"].includes(e.key.toLowerCase())) ||
+        (e.ctrlKey && e.shiftKey && ["i", "j", "c"].includes(e.key.toLowerCase()))
+      ) {
+        e.preventDefault();
+        return false;
+      }
+    });
+
+    window.onload = () => {
+      logUserData();
+      setupVideoTracking();
+      setupIcons();
+      initializeLikeData();
+      setupRealtimeListener();
+    };
+  </script>
 </head>
-<body>
-    <div class="container">
-        <div class="video-container">
-            <video controls controlslist="nodownload" playsinline>
-                <!-- Src set via JS ke /video (Worker proxy) -->
-                Your browser does not support the video tag.
-            </video>
-            <div class="sidebar">
-                <div class="icon-group">
-                    <div class="icon like-icon">
-                        <i class="far fa-heart"></i>
-                    </div>
-                    <div class="count like-count">0</div>
-                </div>
-                <div class="icon-group">
-                    <div class="icon comment-icon">
-                        <i class="uil uil-comment-slash"></i>
-                    </div>
-                    <div class="count">3</div>
-                </div>
-            </div>
+<body oncontextmenu="return false">
+  <div class="container">
+    <div class="video-container">
+      <video id="myVideo" controls controlsList="nodownload" playsinline loop preload="auto">
+        <source src="/video" type="video/mp4" />
+        Your browser does not support the video tag.
+      </video>
+      <div class="sidebar">
+        <div class="icon-group">
+          <div class="icon like-icon">
+            <i class="far fa-heart"></i>
+          </div>
+          <div class="count like-count">0</div>
         </div>
+        <div class="icon-group">
+          <div class="icon comment-icon">
+            <i class="uil uil-comment-slash"></i>
+          </div>
+          <div class="count">3</div>
+        </div>
+      </div>
     </div>
+  </div>
 </body>
-</html>
+    </html>
