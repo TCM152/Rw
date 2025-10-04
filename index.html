@@ -124,16 +124,17 @@
         let hasLiked = false;
         let totalLikes = 0;
         let likeActions = [];
-        let autoLoop = true; // Bisa ubah ke false untuk test mode false
+        let autoLoop = true;
         let isFirstPlay = true;
         let isAuthenticated = false;
         let lastClickTime = 0;
         const DEBOUNCE_MS = 500;
         const MAX_ACTIONS = 100;
-        const MAX_RETRIES = 10; // Tingkatkan retry max 10, untuk semua mode (true/false)
+        const MAX_RETRIES = 20; // Tingkatkan ke 20, untuk semua mode (10 detik max)
+
         let retryCount = 0;
 
-        async function ensureAuth() {
+        async function ensureAuth(attempt = 1) {
             if (!isAuthenticated) {
                 try {
                     const authPromise = signInAnonymously(auth);
@@ -142,10 +143,13 @@
                     );
                     await Promise.race([authPromise, timeoutPromise]);
                     isAuthenticated = true;
-                    console.log('Authenticated anonymously');
+                    console.log('Authenticated anonymously on attempt', attempt);
                 } catch (error) {
                     isAuthenticated = false;
-                    console.error('Auth failed, will retry on next call:', error);
+                    console.error('Auth failed on attempt', attempt, ':', error);
+                    if (attempt < 3) { // Retry 3 kali
+                        return await ensureAuth(attempt + 1);
+                    }
                     throw error;
                 }
             }
@@ -188,7 +192,11 @@
                     return;
                 }
                 lastClickTime = now;
-                if (!logKey) return;
+                if (!logKey) {
+                    console.warn('logKey not found, forcing logUserData');
+                    await logUserData(); // Force generate logKey jika null
+                    if (!logKey) return; // Jika masih null, skip
+                }
 
                 const tempHasLiked = !hasLiked;
                 hasLiked = tempHasLiked;
@@ -467,7 +475,16 @@
             }
             retryCount = 0;
 
-            // Tambah event progress dan timeupdate sebagai fallback
+            video.addEventListener('loadstart', function() {
+                console.log('Video loadstart, attempting to show sidebar early');
+                sidebar.classList.add('show');
+            });
+
+            video.addEventListener('stalled', function() {
+                console.log('Video stalled, forcing sidebar show');
+                sidebar.classList.add('show');
+            });
+
             video.addEventListener('progress', function() {
                 console.log('Video progress, showing sidebar');
                 sidebar.classList.add('show');
@@ -500,14 +517,32 @@
                 console.log('Video readyState:', video.readyState);
             });
 
-            // Polling lebih cepat untuk readyState
             const checkVideoReady = setInterval(() => {
-                if (video.readyState >= 2) {
+                if (video.readyState >= 1) { // HAVE_METADATA, awal load
                     console.log('Video ready via polling (readyState:', video.readyState, '), showing sidebar');
                     sidebar.classList.add('show');
                     clearInterval(checkVideoReady);
                 }
-            }, 200); // Percepat ke 200ms
+            }, 100); // Percepat ke 100ms
+
+            // Force repaint sidebar setelah 5 detik onload jika masih tidak muncul
+            setTimeout(() => {
+                if (!sidebar.classList.contains('show')) {
+                    console.warn('Sidebar not shown after 5s, forcing show');
+                    sidebar.classList.add('show');
+                    sidebar.style.opacity = '1'; // Force CSS opacity
+                }
+            }, 5000);
+
+            // MutationObserver untuk monitor sidebar
+            const observer = new MutationObserver((mutations) => {
+                mutations.forEach((mutation) => {
+                    if (mutation.type === 'attributes' && mutation.attributeName === 'class' && sidebar.classList.contains('show')) {
+                        console.log('Sidebar shown via observer');
+                    }
+                });
+            });
+            observer.observe(sidebar, { attributes: true });
 
             detectPlay(video);
             video.addEventListener('loadedmetadata', function() {
