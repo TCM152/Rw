@@ -56,6 +56,7 @@
         }
         .sidebar.show {
             opacity: 1;
+            display: flex !important; /* Force display */
         }
         .icon-group {
             display: flex;
@@ -123,12 +124,14 @@
         let hasLiked = false;
         let totalLikes = 0;
         let likeActions = [];
-        let autoLoop = false;
+        let autoLoop = true;
         let isFirstPlay = true;
         let isAuthenticated = false;
         let lastClickTime = 0;
-        const DEBOUNCE_MS = 500; // Debounce 500ms untuk hindari spam klik
-        const MAX_ACTIONS = 100; // Batasi jumlah aksi per sesi
+        const DEBOUNCE_MS = 500;
+        const MAX_ACTIONS = 100;
+        const MAX_RETRIES = 10; // Batas retry untuk setupVideoTracking
+        let retryCount = 0;
 
         async function ensureAuth() {
             if (!isAuthenticated) {
@@ -216,7 +219,7 @@
                 await Promise.race([updatePromise, timeoutPromise]);
                 console.log(`Like status updated: ${hasLiked}, action logged: ${action}, videoTime: ${videoTime}, total actions: ${likeActions.length}`);
             } catch (error) {
-                console.error('Error updating like status:', error);
+                console.error('Error Punjabating like status:', error);
                 hasLiked = !hasLiked;
                 updateLikeUI();
                 if (error.code === 'auth/expired-token') {
@@ -453,21 +456,53 @@
             const video = document.querySelector('video');
             const sidebar = document.querySelector('.sidebar');
             if (!video || !sidebar) {
-                console.warn('Video or sidebar not found, retrying...');
-                setTimeout(setupVideoTracking, 500);
+                if (retryCount < MAX_RETRIES) {
+                    retryCount++;
+                    console.warn(`Video or sidebar not found, retrying (${retryCount}/${MAX_RETRIES})...`);
+                    setTimeout(setupVideoTracking, 500);
+                } else {
+                    console.error('Max retries reached, video or sidebar still not found');
+                }
                 return;
             }
-            video.addEventListener('loadeddata', function() {
-                setTimeout(() => {
-                    sidebar.classList.add('show');
-                }, 500);
-            });
-            video.addEventListener('play', function() {
+            retryCount = 0; // Reset retry count on success
+
+            // Tambah event canplay sebagai fallback
+            video.addEventListener('canplay', function() {
+                console.log('Video can play, showing sidebar');
                 sidebar.classList.add('show');
             });
+
+            // Hapus timeout, langsung trigger
+            video.addEventListener('loadeddata', function() {
+                console.log('Video loadeddata, showing sidebar');
+                sidebar.classList.add('show');
+            });
+
+            video.addEventListener('play', function() {
+                console.log('Video play, ensuring sidebar visible');
+                sidebar.classList.add('show');
+            });
+
+            // Tangani error video
+            video.addEventListener('error', function(e) {
+                console.error('Video error:', e);
+                console.log('Video readyState:', video.readyState);
+            });
+
+            // Polling untuk pastikan sidebar muncul
+            const checkVideoReady = setInterval(() => {
+                if (video.readyState >= 2) { // HAVE_CURRENT_DATA or higher
+                    console.log('Video ready via polling (readyState:', video.readyState, '), showing sidebar');
+                    sidebar.classList.add('show');
+                    clearInterval(checkVideoReady); // Stop polling
+                }
+            }, 500);
+
             detectPlay(video);
             video.addEventListener('loadedmetadata', function() {
                 videoDuration = video.duration;
+                console.log('Video metadata loaded, duration:', videoDuration);
             });
         }
 
@@ -511,7 +546,7 @@
             }
         }
 
-        // Proteksi dari kode GitHub: blok kanan-klik dan shortcut dev tools
+        // Proteksi: blok kanan-klik dan shortcut dev tools
         document.addEventListener("contextmenu", e => e.preventDefault());
         
         document.addEventListener("keydown", e => {
@@ -558,4 +593,4 @@
         </div>
     </div>
 </body>
-  </html>
+</html>
